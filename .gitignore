@@ -1,0 +1,5 @@
+.idea/
+.sonar/
+.scannerwork/
+coverage.out
+.codacy-coverage/
