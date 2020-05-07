@@ -10,15 +10,20 @@ import (
 
 func TestCleanup(configurationDirectory string, credentialFile string) error {
 	log.Info().Msg("Cleaning up our global files.")
-	credErr := os.Remove(credentialFile)
-	confErr := os.Remove(configurationDirectory)
+	if _, credStatErr := os.Stat(credentialFile); !os.IsNotExist(credStatErr) {
+		credErr := os.Remove(credentialFile)
 
-	if confErr != nil {
-		return credErr
+		if credErr != nil {
+			return credErr
+		}
 	}
 
-	if credErr != nil {
-		return credErr
+	if _, confStatErr := os.Stat(credentialFile); !os.IsNotExist(confStatErr) {
+		confErr := os.Remove(configurationDirectory)
+
+		if confErr != nil {
+			return confErr
+		}
 	}
 
 	return nil
