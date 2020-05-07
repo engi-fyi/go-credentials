@@ -2,6 +2,7 @@ package environment
 
 import (
 	"errors"
+	"github.com/HammoTime/go-credentials/global"
 	"github.com/rs/zerolog/log"
 	"os"
 	"regexp"
@@ -81,19 +82,20 @@ func Load(applicationName string, alternates map[string]string) (map[string]stri
 		}
 	}
 
-	log.Trace().Str("alternate_username", alternates["username"]).Msg("Found alternate username.")
-	log.Trace().Str("alternate_password", alternates["password"]).Msg("Found alternate password.")
-
 	if _, exists := parsedVariables["username"]; !exists {
 		if _, exists := parsedVariables[strings.ToLower(alternates["username"])]; !exists {
 			return make(map[string]string), errors.New(ERR_REQUIRED_VARIABLE_USERNAME_NOT_FOUND)
 		}
+
+		log.Trace().Str("alternate_username", alternates["username"]).Msg("Found alternate username.")
 	}
 
 	if _, exists := parsedVariables["password"]; !exists {
 		if _, exists := parsedVariables[strings.ToLower(alternates["password"])]; !exists {
 			return make(map[string]string), errors.New(ERR_REQUIRED_VARIABLE_PASSWORD_NOT_FOUND)
 		}
+
+		log.Trace().Str("alternate_password", alternates["password"]).Msg("Found alternate password.")
 	}
 
 	return parsedVariables, nil
@@ -101,7 +103,7 @@ func Load(applicationName string, alternates map[string]string) (map[string]stri
 
 func deployUsername(prefix string, username string, alternates map[string]string) (string, error) {
 	usernameKey := prefix + "_USERNAME"
-	keyRegex := regexp.MustCompile(REGEX_KEY_NAME)
+	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 	if replaceKey, ok := alternates["username"]; ok {
 		usernameKey = prefix + "_" + strings.ToUpper(replaceKey)
@@ -124,7 +126,7 @@ func deployUsername(prefix string, username string, alternates map[string]string
 func deployPassword(prefix string, password string, alternates map[string]string) (string, error) {
 	if password != "" {
 		passwordKey := prefix + "_PASSWORD"
-		keyRegex := regexp.MustCompile(REGEX_KEY_NAME)
+		keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 		if replaceKey, ok := alternates["password"]; ok {
 			passwordKey = prefix + "_" + strings.ToUpper(replaceKey)
@@ -148,7 +150,7 @@ func deployPassword(prefix string, password string, alternates map[string]string
 }
 
 func deployAttributes(prefix string, attributes map[string]string) ([]string, error) {
-	keyRegex := regexp.MustCompile(REGEX_KEY_NAME)
+	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 	var attributeKeys []string
 
 	for key, value := range attributes {
