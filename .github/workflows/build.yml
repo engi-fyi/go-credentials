@@ -30,8 +30,8 @@ jobs:
               dep ensure
           fi
       - name: Test
-        run: go test -coverprofile=reports/coverage.out ./...
-      - name: Upload test profile
+        run: go global -coverprofile=reports/coverage.out ./...
+      - name: Upload global profile
         uses: actions/upload-artifact@v1
         with:
           name: coverprofile

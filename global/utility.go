@@ -1,4 +1,4 @@
-package test
+package global
 
 import (
 	"github.com/rs/zerolog"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestCleanup(configurationDirectory string, credentialFile string) error {
-	log.Info().Msg("Cleaning up our test files.")
+	log.Info().Msg("Cleaning up our global files.")
 	os.Remove(credentialFile)
 	os.Remove(configurationDirectory)
 

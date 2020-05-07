@@ -1,7 +1,7 @@
 package factory
 
 import (
-	"github.com/HammoTime/go-credentials/test"
+	"github.com/HammoTime/go-credentials/global"
 	"github.com/rs/zerolog/log"
 	"os"
 	"strings"
@@ -9,24 +9,24 @@ import (
 )
 
 func TestFactoryNew(t *testing.T) {
-	assert := test.InitTest(t)
+	assert := global.InitTest(t)
 	_, factoryErr := New("", false)
 	assert.EqualError(factoryErr, ERR_APPLICATION_NAME_BLANK)
-	newFactory, factoryErr := New(test.TEST_VAR_APPLICATION_NAME, false)
-	assert.Equal(newFactory.ApplicationName, test.TEST_VAR_APPLICATION_NAME)
+	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.Equal(newFactory.ApplicationName, global.TEST_VAR_APPLICATION_NAME)
 	assert.False(newFactory.UseEnvironment)
-	assert.Equal(newFactory.OutputType, OUTPUT_TYPE_INI)
+	assert.Equal(newFactory.OutputType, global.OUTPUT_TYPE_INI)
 }
 
 func TestFactoryInitialize(t *testing.T) {
-	assert := test.InitTest(t)
+	assert := global.InitTest(t)
 
 	log.Info().Msg("Testing to make sure a blank application name cannot be passed.")
 	testFactory, blankErr := New("", false)
 	assert.EqualError(blankErr, ERR_APPLICATION_NAME_BLANK)
 
 	log.Info().Msg("Creating and initializing a new Factory.")
-	testFactory, newErr := New(test.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, newErr := New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(newErr)
 	assert.False(testFactory.Initialized)
 	testFactory.Initialize()
@@ -36,60 +36,59 @@ func TestFactoryInitialize(t *testing.T) {
 	assert.Equal(testGetConfigurationDirectory(testFactory.ApplicationName), testFactory.ConfigurationDirectory)
 	assert.DirExists(testFactory.ConfigurationDirectory)
 
-	cleanupErr := test.TestCleanup(testFactory.ConfigurationDirectory, testFactory.CredentialFile)
+	cleanupErr := global.TestCleanup(testFactory.ConfigurationDirectory, testFactory.CredentialFile)
 	assert.NoError(cleanupErr)
 }
 
 func TestSetOutputType(t *testing.T) {
-	assert := test.InitTest(t)
+	assert := global.InitTest(t)
 
-	newFactory, factoryErr := New(test.TEST_VAR_APPLICATION_NAME, false)
+	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
 
 	nfiErr := newFactory.Initialize()
 	assert.NoError(nfiErr)
 
-	otjErr := newFactory.SetOutputType(OUTPUT_TYPE_JSON)
+	otjErr := newFactory.SetOutputType(global.OUTPUT_TYPE_JSON)
 	assert.NoError(otjErr)
 
-	otiErr := newFactory.SetOutputType(OUTPUT_TYPE_INI)
+	otiErr := newFactory.SetOutputType(global.OUTPUT_TYPE_INI)
 	assert.NoError(otiErr)
 
-	iotErr := newFactory.SetOutputType(OUTPUT_TYPE_INVALID)
+	iotErr := newFactory.SetOutputType(global.OUTPUT_TYPE_INVALID)
 	assert.EqualError(iotErr, ERR_INVALID_OUTPUT_TYPE)
 }
 
 func TestSetEnvironmentKeys(t *testing.T) {
-	assert := test.InitTest(t)
+	assert := global.InitTest(t)
 
-	newFactory, factoryErr := New(test.TEST_VAR_APPLICATION_NAME, false)
+	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
 	initErr := newFactory.Initialize()
 	assert.NoError(initErr)
 
-	altErr := newFactory.SetEnvironmentKeys(test.TEST_VAR_ENVIRONMENT_USERNAME_KEY, test.TEST_VAR_ENVIRONMENT_PASSWORD_KEY)
+	altErr := newFactory.SetEnvironmentKeys(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
 	assert.NoError(altErr)
-	assert.EqualValues(test.TEST_VAR_ENVIRONMENT_USERNAME_KEY, newFactory.Alternates["username"])
-	assert.EqualValues(test.TEST_VAR_ENVIRONMENT_PASSWORD_KEY, newFactory.Alternates["password"])
+	assert.EqualValues(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, newFactory.Alternates["username"])
+	assert.EqualValues(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, newFactory.Alternates["password"])
 
-	altErr = newFactory.SetEnvironmentKeys(test.TEST_VAR_ENVIRONMENT_BAD_KEY, test.TEST_VAR_ENVIRONMENT_PASSWORD_KEY)
+	altErr = newFactory.SetEnvironmentKeys(global.TEST_VAR_ENVIRONMENT_BAD_LABEL, global.TEST_VAR_USERNAME_ALTERNATE_LABEL)
 	assert.EqualError(altErr, ERR_KEY_MUST_MATCH_REGEX)
-	assert.EqualValues(test.TEST_VAR_ENVIRONMENT_USERNAME_KEY, newFactory.Alternates["username"])
+	assert.EqualValues(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, newFactory.Alternates["username"])
 
-	altErr = newFactory.SetEnvironmentKeys(test.TEST_VAR_ENVIRONMENT_USERNAME_KEY, test.TEST_VAR_ENVIRONMENT_BAD_KEY)
+	altErr = newFactory.SetEnvironmentKeys(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, global.TEST_VAR_ENVIRONMENT_BAD_LABEL)
 	assert.EqualError(altErr, ERR_KEY_MUST_MATCH_REGEX)
-	assert.EqualValues(test.TEST_VAR_ENVIRONMENT_PASSWORD_KEY, newFactory.Alternates["password"])
+	assert.EqualValues(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, newFactory.Alternates["password"])
 
-	altErr = newFactory.SetEnvironmentKeys(test.TEST_VAR_ENVIRONMENT_BAD_KEY, test.TEST_VAR_ENVIRONMENT_BAD_KEY)
+	altErr = newFactory.SetEnvironmentKeys(global.TEST_VAR_ENVIRONMENT_BAD_LABEL, global.TEST_VAR_ENVIRONMENT_BAD_LABEL)
 	assert.EqualError(altErr, ERR_KEY_MUST_MATCH_REGEX)
-	assert.EqualValues(test.TEST_VAR_ENVIRONMENT_USERNAME_KEY, newFactory.Alternates["username"])
-	assert.EqualValues(test.TEST_VAR_ENVIRONMENT_USERNAME_KEY, newFactory.Alternates["username"])
-	assert.EqualValues(test.TEST_VAR_ENVIRONMENT_PASSWORD_KEY, newFactory.Alternates["password"])
+	assert.EqualValues(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, newFactory.Alternates["username"])
+	assert.EqualValues(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, newFactory.Alternates["password"])
 }
 
 func TestFactoryAlternates(t *testing.T) {
-	assert := test.InitTest(t)
-	newFactory, factoryErr := New(test.TEST_VAR_APPLICATION_NAME, false)
+	assert := global.InitTest(t)
+	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
 	newFactory.Initialize()
 	assert.NoError(factoryErr)
 
@@ -100,10 +99,10 @@ func TestFactoryAlternates(t *testing.T) {
 	assert.EqualError(bauError, ERR_ALTERNATE_USERNAME_CANNOT_BE_BLANK)
 	bapError := newFactory.SetAlternatePassword("")
 	assert.EqualError(bapError, ERR_ALTERNATE_PASSWORD_CANNOT_BE_BLANK)
-	newFactory.SetAlternateUsername(test.TEST_VAR_ALTERNATE_USERNAME)
-	newFactory.SetAlternatePassword(test.TEST_VAR_ALTERNATE_PASSWORD)
-	assert.Equal(strings.ToLower(test.TEST_VAR_ALTERNATE_USERNAME), newFactory.GetAlternateUsername())
-	assert.Equal(strings.ToLower(test.TEST_VAR_ALTERNATE_PASSWORD), newFactory.GetAlternatePassword())
+	newFactory.SetAlternateUsername(global.TEST_VAR_USERNAME_ALTERNATE_LABEL)
+	newFactory.SetAlternatePassword(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
+	assert.Equal(strings.ToLower(global.TEST_VAR_USERNAME_ALTERNATE_LABEL), newFactory.GetAlternateUsername())
+	assert.Equal(strings.ToLower(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL), newFactory.GetAlternatePassword())
 }
 
 func testGetConfigurationDirectory(applicationName string) string {

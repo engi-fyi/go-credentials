@@ -2,6 +2,7 @@ package factory
 
 import (
 	"errors"
+	"github.com/HammoTime/go-credentials/global"
 	"os"
 	"regexp"
 	"strings"
@@ -11,7 +12,7 @@ import (
 
 // TODO: Run Initialize() at the end of this.
 func New(applicationName string, useEnvironment bool) (*Factory, error) {
-	keyRegex := regexp.MustCompile(REGEX_KEY_NAME)
+	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 	if applicationName == "" {
 		return nil, errors.New(ERR_APPLICATION_NAME_BLANK)
@@ -24,7 +25,7 @@ func New(applicationName string, useEnvironment bool) (*Factory, error) {
 	return &Factory{
 		ApplicationName: applicationName,
 		UseEnvironment:  useEnvironment,
-		OutputType:      OUTPUT_TYPE_INI,
+		OutputType:      global.OUTPUT_TYPE_INI,
 	}, nil
 }
 
@@ -101,7 +102,7 @@ func (factory *Factory) GetAlternatePassword() string {
 }
 
 func (factory *Factory) SetOutputType(outputType string) error {
-	if outputType == OUTPUT_TYPE_INI || outputType == OUTPUT_TYPE_JSON {
+	if outputType == global.OUTPUT_TYPE_INI || outputType == global.OUTPUT_TYPE_JSON {
 		factory.OutputType = outputType
 		return nil
 	} else {
@@ -110,7 +111,7 @@ func (factory *Factory) SetOutputType(outputType string) error {
 }
 
 func (factory *Factory) SetEnvironmentKeys(usernameKey string, passwordKey string) error {
-	keyRegex := regexp.MustCompile(REGEX_KEY_NAME)
+	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 	if keyRegex.MatchString(usernameKey) {
 		log.Trace().Str("key", usernameKey).Msg("Alternate environment key for username registered.")

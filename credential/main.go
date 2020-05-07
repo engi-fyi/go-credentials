@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/HammoTime/go-credentials/environment"
 	"github.com/HammoTime/go-credentials/factory"
+	"github.com/HammoTime/go-credentials/global"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/ini.v1"
 	"os"
@@ -38,14 +39,14 @@ func New(credentialFactory *factory.Factory, username string, password string) (
 }
 
 func (credential *Credential) SetAttribute(key string, value string) error {
-	if strings.ToLower(key) == ATTRIBUTE_USERNAME {
+	if strings.ToLower(key) == global.USERNAME_LABEL {
 		log.Trace().Msg("Redirected attribute request to set username.")
 		credential.Username = value
-	} else if strings.ToLower(key) == ATTRIBUTE_PASSWORD {
+	} else if strings.ToLower(key) == global.PASSWORD_LABEL {
 		log.Trace().Msg("Redirected attribute request to set password.")
 		credential.Password = value
 	} else {
-		keyRegex := regexp.MustCompile(REGEX_KEY_NAME)
+		keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 		if keyRegex.MatchString(key) {
 			log.Trace().Str("key", key).Msg("Setting attribute.")
@@ -59,10 +60,10 @@ func (credential *Credential) SetAttribute(key string, value string) error {
 }
 
 func (credential *Credential) GetAttribute(key string) (string, error) {
-	if strings.ToLower(key) == ATTRIBUTE_USERNAME {
+	if strings.ToLower(key) == global.USERNAME_LABEL {
 		log.Trace().Msg("Redirected attribute request to value of username.")
 		return credential.Username, nil
-	} else if strings.ToLower(key) == ATTRIBUTE_PASSWORD {
+	} else if strings.ToLower(key) == global.PASSWORD_LABEL {
 		log.Trace().Msg("Redirected attribute request to value of password.")
 		return credential.Password, nil
 	} else {
@@ -89,12 +90,12 @@ func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error
 	}
 
 	for key, value := range values {
-		if key == ATTRIBUTE_USERNAME || key == credentialFactory.Alternates[ATTRIBUTE_USERNAME] {
+		if key == global.USERNAME_LABEL || key == credentialFactory.Alternates[global.USERNAME_LABEL] {
 			log.Trace().Msg("Found username key.")
 			username = value
 		}
 
-		if key == ATTRIBUTE_PASSWORD || key == credentialFactory.Alternates[ATTRIBUTE_PASSWORD] {
+		if key == global.PASSWORD_LABEL || key == credentialFactory.Alternates[global.PASSWORD_LABEL] {
 			log.Trace().Msg("Found password key.")
 			password = value
 		}
@@ -108,7 +109,7 @@ func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error
 
 	log.Trace().Msg("Adding attributes.")
 	for key, value := range values {
-		if key != ATTRIBUTE_USERNAME && key != ATTRIBUTE_PASSWORD {
+		if key != global.USERNAME_LABEL && key != global.PASSWORD_LABEL {
 			log.Trace().Str("key", key).Msg("Found attribute, setting.")
 			attrErr := credential.SetAttribute(key, value)
 
@@ -123,9 +124,9 @@ func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error
 
 func (credential *Credential) Save() error {
 	if credential.Factory.Initialized {
-		if credential.Factory.OutputType == factory.OUTPUT_TYPE_JSON {
+		if credential.Factory.OutputType == global.OUTPUT_TYPE_JSON {
 			return credential.saveJson()
-		} else if credential.Factory.OutputType == factory.OUTPUT_TYPE_INI {
+		} else if credential.Factory.OutputType == global.OUTPUT_TYPE_INI {
 			return credential.saveIni()
 		} else {
 			return errors.New(factory.ERR_FACTORY_INCONSISTENT_STATE)
@@ -140,9 +141,9 @@ func Load(sourceFactory *factory.Factory) (*Credential, error) {
 	loadedCredential, envErr := LoadFromEnvironment(sourceFactory)
 
 	if envErr != nil || !loadedCredential.Initialized {
-		if sourceFactory.OutputType == factory.OUTPUT_TYPE_JSON {
+		if sourceFactory.OutputType == global.OUTPUT_TYPE_JSON {
 			loadedCredential, fileErr = loadJson(sourceFactory)
-		} else if sourceFactory.OutputType == factory.OUTPUT_TYPE_INI {
+		} else if sourceFactory.OutputType == global.OUTPUT_TYPE_INI {
 			loadedCredential, fileErr = LoadFromIniFile(sourceFactory)
 		} else {
 			return nil, errors.New(factory.ERR_FACTORY_INCONSISTENT_STATE)
