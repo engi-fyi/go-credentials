@@ -2,7 +2,7 @@ package factory
 
 import (
 	"errors"
-	"github.com/HammoTime/go-credentials/global"
+	"github.com/engi-fyi/go-credentials/global"
 	"os"
 	"regexp"
 	"strings"

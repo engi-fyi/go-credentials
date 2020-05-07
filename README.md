@@ -6,6 +6,43 @@
 
 Welcome to `go-credentials`!
 
-This project was built out of a need for a library to manage credentials files (similar to AWS credentials), their attributes, sessions, and environment variables.
+This project is being built out of a need for a library to manage credentials files (similar to AWS credentials), their attributes, sessions, and environment variables.
 
-![go-credentials logo](https://github.com/HammoTime/go-credentials/raw/master/assets/go-credentials-logo.png)
+![go-credentials logo](https://github.com/engi-fyi/go-credentials/raw/master/assets/go-credentials-logo.png)
+
+The Credential API is broken down into two pieces, each with their own functionality:
+1. `Factory`: responsible for setting variables that are global to your application, and;
+    - Set alternate keys for username/password (e.g. ACCESS_TOKEN/SECRET_KEY).
+    - Set the output type of the credentials (only `.ini` currently implemented).
+2. `Credential`: represents a user's credentials.
+    - Username/Password defined on model.
+    - Set Attributes.
+    - Get Attributes.
+    - Read values from Environment variables.
+    - Load from .ini File.
+    
+To get started, is all you need to do is the following:
+```shell script
+export TEST_APP_USERNAME="my.username"
+export TEST_APP_PASSWORD="Password1!"
+export TEST_APP_ATTRIBUTE="an attribute with a value"
+```
+```go
+package main
+
+import (
+    "github.com/engi-fyi/go-credentials/credential"
+    "github.com/engi-fyi/go-credentials/factory"
+)
+
+func main() {
+    myFact, _ := factory.New("test_app", false)
+    myFact.Initialize()
+    myCred, _ := credential.LoadFromEnvironment(myFact)
+    print(myCred.Username)                  // "my.username"
+    print(myCred.Password)                  // "Password1!"
+    print(myCred.GetAttribute("attribute")) // "an attribute with a value"
+    myCred.Save()                           // credentials file created at
+                                            // ~/.test_app/credentials
+}
+```

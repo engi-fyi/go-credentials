@@ -3,9 +3,9 @@ package credential
 import (
 	"errors"
 	"fmt"
-	"github.com/HammoTime/go-credentials/environment"
-	"github.com/HammoTime/go-credentials/factory"
-	"github.com/HammoTime/go-credentials/global"
+	"github.com/engi-fyi/go-credentials/environment"
+	"github.com/engi-fyi/go-credentials/factory"
+	"github.com/engi-fyi/go-credentials/global"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/ini.v1"
 	"os"

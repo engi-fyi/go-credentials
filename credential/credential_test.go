@@ -1,9 +1,9 @@
 package credential
 
 import (
-	"github.com/HammoTime/go-credentials/environment"
-	"github.com/HammoTime/go-credentials/factory"
-	"github.com/HammoTime/go-credentials/global"
+	"github.com/engi-fyi/go-credentials/environment"
+	"github.com/engi-fyi/go-credentials/factory"
+	"github.com/engi-fyi/go-credentials/global"
 	"os"
 	"strings"
 	"testing"

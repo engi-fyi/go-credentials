@@ -1,4 +1,4 @@
-module github.com/HammoTime/go-credentials
+module github.com/engi-fyi/go-credentials
 
 go 1.13
 

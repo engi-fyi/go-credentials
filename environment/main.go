@@ -2,7 +2,7 @@ package environment
 
 import (
 	"errors"
-	"github.com/HammoTime/go-credentials/global"
+	"github.com/engi-fyi/go-credentials/global"
 	"github.com/rs/zerolog/log"
 	"os"
 	"regexp"

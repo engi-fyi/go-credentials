@@ -1,6 +1,6 @@
 package credential
 
-import "github.com/HammoTime/go-credentials/factory"
+import "github.com/engi-fyi/go-credentials/factory"
 
 type Credential struct {
 	Username             string            `json:"username"`
