@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// TestCleanup is a utility function that deletes both the configurationDirectory and credentialFile.
 func TestCleanup(configurationDirectory string, credentialFile string) error {
 	log.Info().Msg("Cleaning up our global files.")
 	if _, credStatErr := os.Stat(credentialFile); !os.IsNotExist(credStatErr) {
@@ -29,6 +30,7 @@ func TestCleanup(configurationDirectory string, credentialFile string) error {
 	return nil
 }
 
+// InitTest is used by test functions to initialize logger settings and the assert pkg.
 func InitTest(t *testing.T) *assert.Assertions {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	return assert.New(t)

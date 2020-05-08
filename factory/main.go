@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// New creates a very simple Factory object, with defaults based on the ApplicationName.
 // TODO: Run Initialize() at the end of this.
 func New(applicationName string, useEnvironment bool) (*Factory, error) {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
@@ -29,7 +30,11 @@ func New(applicationName string, useEnvironment bool) (*Factory, error) {
 	}, nil
 }
 
-// TODO: Include in New
+// Initialize sets computed properties a Factory object. Specifically, it sets the value of ConigurationDirectory and
+// CredentialFile. If ConfigurationDirectory does not exist, it will also create it. Alternates is also initialized as
+// an empty map and the Initialized flag is set to true.
+//
+// TODO(5): Include in New method.
 func (factory *Factory) Initialize() error {
 	log.Trace().Msg("Initializing application credentials.")
 	log.Trace().Msg("Retrieving user home directory.")
@@ -67,6 +72,7 @@ func (factory *Factory) Initialize() error {
 	return nil
 }
 
+// SetAlternateUsername sets a label to be used in lieu of username in environment variables.
 func (factory *Factory) SetAlternateUsername(alternateUsername string) error {
 	if alternateUsername != "" {
 		factory.Alternates["username"] = strings.ToLower(alternateUsername)
@@ -76,6 +82,7 @@ func (factory *Factory) SetAlternateUsername(alternateUsername string) error {
 	}
 }
 
+// GetAlternateUsername gets a label to be used in lieu of username in environment variables.
 func (factory *Factory) GetAlternateUsername() string {
 	if val, exists := factory.Alternates["username"]; exists {
 		return val
@@ -84,6 +91,7 @@ func (factory *Factory) GetAlternateUsername() string {
 	}
 }
 
+// SetAlternatePassword sets a label to be used in lieu of password in environment variables.
 func (factory *Factory) SetAlternatePassword(alternatePassword string) error {
 	if alternatePassword != "" {
 		factory.Alternates["password"] = strings.ToLower(alternatePassword)
@@ -93,6 +101,7 @@ func (factory *Factory) SetAlternatePassword(alternatePassword string) error {
 	}
 }
 
+// GetAlternatePassword sets a label to be used in lieu of password in environment variables.
 func (factory *Factory) GetAlternatePassword() string {
 	if val, exists := factory.Alternates["password"]; exists {
 		return val
@@ -101,6 +110,10 @@ func (factory *Factory) GetAlternatePassword() string {
 	}
 }
 
+// SetOutputType determines which of the supported file types Credentials should be serialized to file as. The currently
+// supported file types are ini with plans to implement json.
+//
+// TODO(7): Implement json format.
 func (factory *Factory) SetOutputType(outputType string) error {
 	if outputType == global.OUTPUT_TYPE_INI || outputType == global.OUTPUT_TYPE_JSON {
 		factory.OutputType = outputType
@@ -109,7 +122,8 @@ func (factory *Factory) SetOutputType(outputType string) error {
 		return errors.New(ERR_INVALID_OUTPUT_TYPE)
 	}
 }
-
+// Set environment keys is a function that sets the alternates for both username and password at the same time. This
+// is the same as calling SetAlternateUsername, then calling SetAlternatePassword in a seperate call.
 func (factory *Factory) SetEnvironmentKeys(usernameKey string, passwordKey string) error {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
