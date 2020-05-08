@@ -14,6 +14,9 @@ import (
 	"time"
 )
 
+// New creates a new Credential instance. credentialFactory provides global application-level settings for the
+// go-credential library. username and password are the user's base credentials. No other attributes are set during
+// the initial creation of a Credential object. It returns a pointer to a new Credential object.
 func New(credentialFactory *factory.Factory, username string, password string) (*Credential, error) {
 	log.Trace().Msg("Building credential object.")
 
@@ -38,6 +41,11 @@ func New(credentialFactory *factory.Factory, username string, password string) (
 	}, nil
 }
 
+// SetAttribute sets an attribute on a Credential object. key must match the regex '(?m)^[0-9A-Za-z_]+$'. There are no
+// restrictions on the value of an attribute, aside from Go-level restrictions on strings. When these values are
+// processed by Save(), they are stored under the [attributes] category. Attributes set by SetAttribute can only be
+// accessed by the sister function GetAttribute. If username or password is passed as the attribute key, the set is
+// redirected to the Username or Password property on the Credential object. This returns an error (if applicable).
 func (credential *Credential) SetAttribute(key string, value string) error {
 	if strings.ToLower(key) == global.USERNAME_LABEL {
 		log.Trace().Msg("Redirected attribute request to set username.")
@@ -59,6 +67,8 @@ func (credential *Credential) SetAttribute(key string, value string) error {
 	return nil
 }
 
+// GetAttribute retrieves an attribute that has been stored in the unexported Credential property attributes. A key
+// is passed in, and if the key does not have a value stored in the Credential, an error is returned.
 func (credential *Credential) GetAttribute(key string) (string, error) {
 	if strings.ToLower(key) == global.USERNAME_LABEL {
 		log.Trace().Msg("Redirected attribute request to value of username.")
@@ -79,6 +89,21 @@ func (credential *Credential) GetAttribute(key string) (string, error) {
 	}
 }
 
+// LoadFromEnvironment is responsible for scanning environment variables and retrieves applicable variables that have
+// the prefix of the application name that has been set in the credentialFactory. Most importantly, it will scan for
+// the keys username or password; if an alternate for either of these have been set, those will be loaded instead.
+// The respective properties Username and Password on the Credential object will be set. The rest of the variables will
+// be stored as attributes and be accessible via GetAttribute.
+//
+// Example 1: Normal Usage
+//
+// If credentialFactory.ApplicationName has been set to TEST_APP, any environment variables beginning with
+// TEST_APP will be imported into the credential object.
+//
+// Example 2: Alternates Usage
+//
+// If credentialFactory.Alternates["username"] has been set to ACCESS_TOKEN, then if an environment variable named
+// TEST_APP_ACCESS_TOKEN exists its value will be stored in the resulting Credential object's Username property.
 func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error) {
 	log.Trace().Msg("Creating credentials from environment variable.")
 	values, loadErr := environment.Load(credentialFactory.ApplicationName, credentialFactory.Alternates)
@@ -122,6 +147,10 @@ func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error
 	return credential, nil
 }
 
+// Save is responsible for saving the credential at ~/.application_name/credentials in the specified output format
+// that has been set on the Credentials' Factory object.
+//
+// TODO(7): Implement json format.
 func (credential *Credential) Save() error {
 	if credential.Factory.Initialized {
 		if credential.Factory.OutputType == global.OUTPUT_TYPE_JSON {
@@ -136,6 +165,12 @@ func (credential *Credential) Save() error {
 	}
 }
 
+// Load is the default method of loading existing credentials. First it will attempt to load credentials from the
+// environment, as they take precedence over file-based credentials. If that is not successful, it will attempt to
+// load credentials from the credentials file using the appropriate format set in the sourceFactory. If the file doesn't
+// exist or is in an unexpected format, an error will be thrown.
+//
+// TODO(7): Implement json format.
 func Load(sourceFactory *factory.Factory) (*Credential, error) {
 	var fileErr error
 	loadedCredential, envErr := LoadFromEnvironment(sourceFactory)
@@ -157,6 +192,16 @@ func Load(sourceFactory *factory.Factory) (*Credential, error) {
 	return loadedCredential, nil
 }
 
+// DeployEnv is used in cases where your application requires environment variables, but your users configure their
+// credentials via file-based methods. Simply Load the Credential from a file, then DeployEnv will deploy the variables
+// as follows:
+// - Username: APP_NAME_USERNAME
+// - Other Attributes: APP_NAME_ATTRIBUTE_NAME
+//
+// Currently, we do not export the Password property to the environment, but it is in the pipeline to enable this in
+// the future.
+//
+// TODO(3): Export Password via Boolean
 func (credential *Credential) DeployEnv() error {
 	if credential.Factory.UseEnvironment {
 		setKeys, deployErr := environment.Deploy(
@@ -173,10 +218,13 @@ func (credential *Credential) DeployEnv() error {
 	}
 }
 
+// GetEnvironmentVariables retrieves a list of internally managed environment variables that have been set by
+// go-credentials. This value only has a value if DeployEnv has been used.
 func (credential *Credential) GetEnvironmentVariables() []string {
 	return credential.environmentVariables
 }
 
+// BUG(4): Respect alternates when saving to file.
 func (credential *Credential) saveIni() error {
 	if credential.Factory.Initialized {
 		log.Trace().Msg("Saving credentials as ini.")
@@ -214,6 +262,19 @@ func (credential *Credential) saveIni() error {
 	}
 }
 
+// LoadFromIniFile is responsible for saving a Credential object as in the ini format at ~/.app_name/credentials.
+// username and password are stored under the default heading, and all attributes are stored under the attributes
+// heading
+//
+// Example Credential File
+// 		[default]
+//		username=my_username
+//		password=my_password01
+//
+//		[attributes]
+//		an_attribute=the value of an attribute
+//
+// BUG(4): Respect alternates when loading from file.
 func LoadFromIniFile(fromFactory *factory.Factory) (*Credential, error) {
 	if fromFactory.Initialized {
 		credentialFile, loadErr := loadIni(fromFactory)
@@ -313,10 +374,12 @@ func addAttributesFromIni(credentialFile *ini.File, loadedCredential *Credential
 	return nil
 }
 
+// TODO(7): Implement json format.
 func (credential *Credential) saveJson() error {
 	return errors.New(ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED)
 }
 
+// TODO(7): Implement json format.
 func loadJson(factory *factory.Factory) (*Credential, error) {
 	return nil, errors.New(ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED)
 }

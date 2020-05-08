@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+// Deploy is responsible for setting environment variables based on the values passed in. If no alternates are set, the
+// username and password will be set as APP_NAME_USERNAME and APP_NAME_PASSWORD respectively. If alternates are
+// set, the key values will be replaced with those names instead. All attributes will then be set in the format of
+// APP_NAME_ATTRIBUTE_NAME. The names of each environment variable are returned as a string array. This is to allow
+// for cleanup of the environment variables if you want them deleted.
 func Deploy(applicationName string, username string, password string, alternates map[string]string, attributes map[string]string) ([]string, error) {
 	var setEnvironmentVariables []string
 
@@ -49,6 +54,7 @@ func Deploy(applicationName string, username string, password string, alternates
 	return setEnvironmentVariables, nil
 }
 
+// CleanEnvironment deletes each environment variable in the variables array.
 func CleanEnvironment(variables []string) error {
 	for key := range variables {
 		if _, ok := os.LookupEnv(variables[key]); ok {
@@ -63,6 +69,10 @@ func CleanEnvironment(variables []string) error {
 	return nil
 }
 
+// Load is responsible for scanning environment variables and retrieves applicable variables that have
+// the prefix of applicationName. When it finds an environment variable with this prefix, it will note the key (sans
+// prefix) and the value. The resulting map that is returned is combination of the cleansed key and the value that was
+// set. This map can be empty.
 func Load(applicationName string, alternates map[string]string) (map[string]string, error) {
 	envVariables := os.Environ()
 	parsedVariables := make(map[string]string)
