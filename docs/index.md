@@ -1,7 +1,7 @@
 Welcome to `go-credentials`! This project was built out of a need for a library that handles and manages credential files and allows them to be manipulated without having to deal with file-based libraries. Instead of loading multiple libraries for different file types inside of your library, load `go-credentials` and we'll handle the rest. Instead of complicated logic, simply call `myCredential.Save()`!
 
 ## Getting Started
-The basic API of `go-credentials` is based on two seperate object types. `Factory` is responsible for setting application-level settings. `Credential` is for managing your users credentials.
+The basic API of `go-credentials` is based on two separate object types. `Factory` is responsible for setting application-level settings. `Credential` is for managing your users credentials.
 
 To get started, is all you need to do is the following:
 ```shell script
@@ -29,7 +29,7 @@ func main() {
 }
 ```
 ## Basic API Overview
-The following secition gives a very basic overview of the `go-credentials` API. To view the full details, please visit out Go Doc page.
+The following section gives a very basic overview of the `go-credentials` API. To view the full details, please visit out Go Doc page.
 ### Factory
 
 - `New`: creates a new Factory object.
