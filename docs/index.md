@@ -46,7 +46,7 @@ The following secition gives a very basic overview of the `go-credentials` API. 
  
 ## Licensing
 
-`go-credentials` is Licensed under the Apache License (the "License");
+`go-credentials` is Licensed under the MIT License (the "License");
 
 You may not use this file except in compliance with the License.
 You may obtain a copy of the License at https://engi.fyi/mit-license/.
