@@ -3,14 +3,14 @@ Welcome to `go-credentials`! This project was built out of a need for a library 
 ## Getting Started
 The basic API of `go-credentials` is based on two separate object types. `Factory` is responsible for setting application-level settings. `Credential` is for managing your users credentials.
 
-To get started, is all you need to do is the following:
-```shell script
+To get started, is all you need to do is the following in your shell:
+```
 export TEST_APP_USERNAME="my.username"
 export TEST_APP_PASSWORD="Password1!"
 export TEST_APP_ATTRIBUTE="an attribute with a value"
 ```
-
-```go
+Then, create a simple Go project, and enter in your `go-credentials` config:
+```
 package main
 
 import (
