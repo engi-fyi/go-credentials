@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/engi-fyi/go-credentials/factory"
 	"github.com/engi-fyi/go-credentials/global"
+	"github.com/rs/zerolog/log"
+	"os"
 	"regexp"
 )
 
@@ -23,6 +25,13 @@ func New(profileName string, credentialFactory *factory.Factory) (*Profile, erro
 	}
 
 	return &newProfile, nil
+}
+
+func Remove(thisProfile *Profile) error {
+	log.Trace().Str("profile", thisProfile.Name).Msg("Deleting profile.")
+	removeErr := os.Remove(thisProfile.ConfigFileLocation)
+	*thisProfile = Profile{}
+	return removeErr
 }
 
 func (thisProfile *Profile) SetAttribute(sectionName string, key string, value string) error {

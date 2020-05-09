@@ -17,3 +17,4 @@ const TEST_VAR_NO_SECTION_UNIQUE_KEY_VALUE = "no section unique value"
 
 const TEST_VAR_FIRST_PROFILE_LABEL = "first_profile"
 const TEST_VAR_SECOND_PROFILE_LABEL = "second_profile"
+const TEST_VAR_BAD_PROFILE_LABEL = "this is a bad profile name"

@@ -10,6 +10,8 @@ import (
 )
 
 func Load(profileName string, credentialFactory *factory.Factory) (*Profile, error) {
+	log.Trace().Msg("Loading existing profile.")
+	log.Trace().Msg("Initializing blank profile.")
 	newProfile := Profile{
 		Name: profileName,
 		ConfigFileLocation: credentialFactory.ConfigDirectory + profileName,
@@ -18,25 +20,27 @@ func Load(profileName string, credentialFactory *factory.Factory) (*Profile, err
 		Factory: credentialFactory,
 	}
 
+	log.Trace().Msg("Loading profile with details from file.")
 	if newProfile.Factory.OutputType == global.OUTPUT_TYPE_INI {
 		loadErr := newProfile.loadFromIni()
 
 		if loadErr != nil {
+			log.Trace().Err(loadErr).Msg("Error loading profile.")
 			return nil, loadErr
 		}
 
 		return &newProfile, nil
 	}
 
-	return nil, nil
+	return nil, errors.New(ERR_NOT_YET_IMPLEMENTED)
 }
 
 func (thisProfile *Profile) loadFromIni() error {
 	if _, cfsErr := os.Stat(thisProfile.ConfigFileLocation); os.IsNotExist(cfsErr) {
-		return thisProfile.initNewIni()
-	} else {
-		return thisProfile.loadExistingIni()
+		return errors.New(ERR_PROFILE_DID_NOT_EXIST)
 	}
+
+	return thisProfile.loadExistingIni()
 }
 
 func (thisProfile *Profile) loadExistingIni() error {
@@ -53,22 +57,4 @@ func (thisProfile *Profile) loadExistingIni() error {
 	}
 
 	return nil
-}
-
-func (thisProfile *Profile) initNewIni() error {
-	log.Trace().Str("config_file", thisProfile.ConfigFileLocation).Msg("Initializing config file.")
-	emptyFile, efErr := os.Create(thisProfile.ConfigFileLocation)
-
-	if efErr != nil {
-		log.Error().Err(efErr).Msg("Error creating config file.")
-		return nil
-	}
-
-	closeErr := emptyFile.Close()
-
-	if closeErr != nil {
-		return closeErr
-	} else {
-		return errors.New(ERR_FILE_DID_NOT_EXIST_BLANK_FILE_INIT)
-	}
 }
