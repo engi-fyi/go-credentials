@@ -11,12 +11,12 @@ package factory
 // Output Type: the file type that the CredentialFile contents should be.
 // Alternates: if username or password are set, those names are set
 type Factory struct {
-	ApplicationName string            `json:"application_name"`
-	ParentDirectory string            `json:"parent_directory"`
-	CredentialFile  string            `json:"credential_file"`
-	ConfigDirectory string			  `json:"config_directory"`
-	UseEnvironment  bool              `json:"use_environment"`
-	Initialized     bool              `json:"initialized"`
-	OutputType      string            `json:"output_type"`
+	ApplicationName string `json:"application_name"`
+	ParentDirectory string `json:"parent_directory"`
+	CredentialFile  string `json:"credential_file"`
+	ConfigDirectory string `json:"config_directory"`
+	UseEnvironment  bool   `json:"use_environment"`
+	Initialized     bool   `json:"initialized"`
+	OutputType      string `json:"output_type"`
 	alternates      map[string]string
 }

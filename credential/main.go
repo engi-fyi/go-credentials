@@ -228,7 +228,7 @@ func (credential *Credential) GetEnvironmentVariables() []string {
 func (credential *Credential) saveIni() error {
 	if credential.Factory.Initialized {
 		log.Trace().Msg("Saving credentials as ini.")
-		credentialFile, loadErr := loadIni(credential.Factory)
+		credentialFile, loadErr := loadCredentialIni(credential.Factory)
 
 		if loadErr != nil {
 			return loadErr
@@ -262,7 +262,7 @@ func (credential *Credential) saveIni() error {
 	}
 }
 
-// LoadFromIniFile is responsible for saving a Credential object as in the ini format at ~/.app_name/credentials.
+// LoadFromIniFile is responsible for loading a Credential object as in the ini format at ~/.app_name/credentials.
 // username and password are stored under the default heading, and all attributes are stored under the attributes
 // heading
 //
@@ -277,7 +277,7 @@ func (credential *Credential) saveIni() error {
 // BUG(4): Respect alternates when loading from file.
 func LoadFromIniFile(fromFactory *factory.Factory) (*Credential, error) {
 	if fromFactory.Initialized {
-		credentialFile, loadErr := loadIni(fromFactory)
+		credentialFile, loadErr := loadCredentialIni(fromFactory)
 
 		if loadErr != nil {
 			log.Error().Err(loadErr).Msg("Error loading credentials.")
@@ -303,11 +303,11 @@ func LoadFromIniFile(fromFactory *factory.Factory) (*Credential, error) {
 	}
 }
 
-func loadIni(fromFactory *factory.Factory) (*ini.File, error) {
+func loadCredentialIni(fromFactory *factory.Factory) (*ini.File, error) {
 	credentialFile, loadErr := ini.Load(fromFactory.CredentialFile)
 
 	if _, cfsErr := os.Stat(fromFactory.CredentialFile); os.IsNotExist(cfsErr) {
-		log.Trace().Msg("File doesn't exist, creating then existing.")
+		log.Trace().Msg("File doesn't exist, creating then exiting.")
 		if _, cfsErr := os.Stat(fromFactory.CredentialFile); os.IsNotExist(cfsErr) {
 			log.Trace().Str("Credential File", fromFactory.CredentialFile).Msg("Initializing credential file.")
 			emptyFile, efErr := os.Create(fromFactory.CredentialFile)

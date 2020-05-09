@@ -151,6 +151,7 @@ func (factory *Factory) SetOutputType(outputType string) error {
 		return errors.New(ERR_INVALID_OUTPUT_TYPE)
 	}
 }
+
 // Set environment keys is a function that sets the alternates for both username and password at the same time. This
 // is the same as calling SetAlternateUsername, then calling SetAlternatePassword in a seperate call.
 func (factory *Factory) SetEnvironmentKeys(usernameKey string, passwordKey string) error {
