@@ -125,7 +125,7 @@ func TestCredentialSave(t *testing.T) {
 	assert.NoError(saveErr)
 
 	global.TestCleanup(
-		testCredential.Factory.ConfigurationDirectory,
+		testCredential.Factory.ParentDirectory,
 		testCredential.Factory.CredentialFile)
 }
 
@@ -179,7 +179,7 @@ func TestCredentialLoadFromIni(t *testing.T) {
 	assert.EqualValues(global.TEST_VAR_ATTRIBUTE_VALUE+"v2", sav)
 
 	global.TestCleanup(
-		loadedCredential.Factory.ConfigurationDirectory,
+		loadedCredential.Factory.ParentDirectory,
 		loadedCredential.Factory.CredentialFile)
 }
 
@@ -233,7 +233,7 @@ func TestCredentialLoad(t *testing.T) {
 	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE, loadedCredential.Password)
 
 	global.TestCleanup(
-		testFactory.ConfigurationDirectory,
+		testFactory.ParentDirectory,
 		testFactory.CredentialFile)
 }
 

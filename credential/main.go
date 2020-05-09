@@ -106,7 +106,7 @@ func (credential *Credential) GetAttribute(key string) (string, error) {
 // TEST_APP_ACCESS_TOKEN exists its value will be stored in the resulting Credential object's Username property.
 func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error) {
 	log.Trace().Msg("Creating credentials from environment variable.")
-	values, loadErr := environment.Load(credentialFactory.ApplicationName, credentialFactory.Alternates)
+	values, loadErr := environment.Load(credentialFactory.ApplicationName, credentialFactory.GetAlternates())
 	username := ""
 	password := ""
 
@@ -115,12 +115,12 @@ func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error
 	}
 
 	for key, value := range values {
-		if key == global.USERNAME_LABEL || key == credentialFactory.Alternates[global.USERNAME_LABEL] {
+		if key == global.USERNAME_LABEL || key == credentialFactory.GetAlternateUsername() {
 			log.Trace().Msg("Found username key.")
 			username = value
 		}
 
-		if key == global.PASSWORD_LABEL || key == credentialFactory.Alternates[global.PASSWORD_LABEL] {
+		if key == global.PASSWORD_LABEL || key == credentialFactory.GetAlternatePassword() {
 			log.Trace().Msg("Found password key.")
 			password = value
 		}
@@ -208,7 +208,7 @@ func (credential *Credential) DeployEnv() error {
 			credential.Factory.ApplicationName,
 			credential.Username,
 			"",
-			credential.Factory.Alternates,
+			credential.Factory.GetAlternates(),
 			credential.attributes)
 
 		credential.environmentVariables = setKeys
