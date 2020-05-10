@@ -398,6 +398,27 @@ func TestCredentialProfiles(t *testing.T) {
 	os.RemoveAll(testFactory.ParentDirectory)
 }
 
+func ProfileTest(t *testing.T) {
+	assert := global.InitTest(t)
+
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	_, credentialErr := NewProfile("", testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.EqualError(credentialErr, profile.ERR_MUST_MATCH_REGEX)
+
+	testCredentials, credentialErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(credentialErr)
+	attrErr := testCredentials.SetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(attrErr)
+
+	_, attrErr = testCredentials.GetSectionAttribute("", "")
+	assert.EqualError(attrErr, ERR_ATTRIBUTE_NOT_EXIST)
+	_, attrErr = testCredentials.GetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, "")
+	assert.EqualError(attrErr, ERR_ATTRIBUTE_NOT_EXIST)
+	myAttribute, attrErr := testCredentials.GetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, "")
+	assert.NoError(attrErr)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, myAttribute)
+}
+
 func buildTestCredentials() (*Credential, error) {
 	factory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, true)
 
