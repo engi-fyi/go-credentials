@@ -84,6 +84,24 @@ func (thisCredential *Credential) SetAttribute(key string, value string) error {
 	return nil
 }
 
+func (thisCredential *Credential) SetSectionAttribute(section string, key string, value string) error {
+	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
+
+	if keyRegex.MatchString(key) {
+		log.Trace().Str("key", key).Msg("Setting attribute.")
+
+		attributeErr := thisCredential.Profile.SetAttribute(section, key, value)
+
+		if attributeErr != nil {
+			return attributeErr
+		}
+	} else {
+		return errors.New(ERR_KEY_MUST_MATCH_REGEX)
+	}
+
+	return nil
+}
+
 /*
 GetAttribute retrieves an attribute that has been stored on the Credential's associated Profile. A key
 is passed in, and if the key does not have a value stored in the Profile, an error is returned.
@@ -107,6 +125,19 @@ func (thisCredential *Credential) GetAttribute(key string) (string, error) {
 		}
 	}
 }
+
+func (thisCredential *Credential) GetSectionAttribute(section string, key string) (string, error) {
+	log.Trace().Str("Attribute", key).Msg("Retrieving attribute.")
+	value := thisCredential.Profile.GetAttribute(section, key)
+
+	if len(value) > 0 {
+		return value, nil
+	} else {
+		log.Trace().Str("Attribute", key).Msg("That attribute doesn't exist.")
+		return "", errors.New(ERR_ATTRIBUTE_NOT_EXIST)
+	}
+}
+
 
 /*
 LoadFromEnvironment is responsible for scanning environment variables and retrieves applicable variables that have

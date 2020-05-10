@@ -328,7 +328,8 @@ func TestCredentialSaveEnv(t *testing.T) {
 	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
 	assert.False(exists)
 
-	testCredentials.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	//testCredentials.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	testCredentials.SetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
 	deployErr := testCredentials.Save()
 	assert.NoError(deployErr)
 

@@ -67,7 +67,11 @@ func Deserialize(sourceFactory *factory.Factory, profileName string, username st
 
 	for section := range attributes {
 		for key, value := range attributes[section] {
-			myProfile.SetAttribute(section, key, value)
+			setErr := myProfile.SetAttribute(section, key, value)
+
+			if setErr != nil {
+				return nil, setErr
+			}
 		}
 	}
 

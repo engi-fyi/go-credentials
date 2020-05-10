@@ -59,14 +59,8 @@ func (thisSerializer *Serializer) saveProfileEnv(attributes map[string]map[strin
 	prefix := thisSerializer.getEnvPrefix()
 
 	for key, value := range attributes {
-		subPrefix := prefix
-
-		if strings.ToUpper(key) != strings.ToUpper(global.DEFAULT_PROFILE_NAME) {
-			subPrefix = prefix + "_" + strings.ToUpper(key)
-		}
-
 		for subKey, subValue := range value {
-			fullKey := subPrefix + strings.ToUpper(subKey)
+			fullKey := prefix + "ATTRIBUTE::" + strings.ToUpper(key) + "::" + strings.ToUpper(subKey)
 			log.Trace().Str("key", fullKey).Msg("Setting attribute environment variable.")
 			setErr := os.Setenv(fullKey, subValue)
 
@@ -86,7 +80,7 @@ func (thisSerializer *Serializer) FromEnv() (string, string, map[string]map[stri
 		return "", "", make(map[string]map[string]string), parseErr
 	}
 
-	username, password, credErr := thisSerializer.loadCredentialEnv(parsedVariables)
+	username, password, credErr := thisSerializer.loadCredentialEnv(parsedVariables[global.NO_SECTION_KEY])
 
 	if credErr != nil {
 		return "", "", make(map[string]map[string]string), credErr
@@ -121,30 +115,35 @@ func (thisSerializer *Serializer) loadCredentialEnv(parsedVariables map[string]s
 
 // currently only supports default profile, maybe change key name at some point in future
 // like maybe APP_NAME_ATTRIBUTE::SECTION_NAME::VARIABLE_NAME
-func (thisSerializer *Serializer) loadProfileEnv(parsedVariables map[string]string) (map[string]map[string]string, error) {
-	delete(parsedVariables, thisSerializer.Factory.GetAlternateUsername())
-	delete(parsedVariables, thisSerializer.Factory.GetAlternatePassword())
+func (thisSerializer *Serializer) loadProfileEnv(parsedVariables map[string]map[string]string) (map[string]map[string]string, error) {
+	delete(parsedVariables[global.NO_SECTION_KEY], thisSerializer.Factory.GetAlternateUsername())
+	delete(parsedVariables[global.NO_SECTION_KEY], thisSerializer.Factory.GetAlternatePassword())
 
-	attributes := make(map[string]map[string]string)
-	attributes[global.DEFAULT_PROFILE_NAME] = parsedVariables
-	return attributes, nil
+	return parsedVariables, nil
 }
 
-func (thisSerializer *Serializer) loadVariablesEnv() (map[string]string, error) {
+func (thisSerializer *Serializer) loadVariablesEnv() (map[string]map[string]string, error) {
 	envVariables := os.Environ()
-	parsedVariables := make(map[string]string)
-	prefix := thisSerializer.getEnvPrefix()
+	parsedVariables := make(map[string]map[string]string)
+	parsedVariables[global.NO_SECTION_KEY] = make(map[string]string)
 
 	for i := range envVariables {
 		splitIndex := strings.Index(envVariables[i], "=")
 		key := strings.ToUpper(envVariables[i][0:splitIndex])
 		value := envVariables[i][splitIndex+1 : len(envVariables[i])]
+		profileName, fieldName, sectionName, didParse := thisSerializer.ParseEnvironmentVariable(key)
 
-		if len(key) > len(prefix) {
-			if key[0:len(prefix)] == prefix {
-				parsedKey := strings.ToLower(strings.Replace(key, prefix, "", 1))
-				log.Trace().Str("Key", parsedKey).Msg("Variable found in environment.")
-				parsedVariables[parsedKey] = value
+		if didParse {
+			if profileName == thisSerializer.ProfileName {
+				if sectionName == "" {
+					parsedVariables[global.NO_SECTION_KEY][fieldName] = value
+				} else {
+					if _, ok := parsedVariables[sectionName]; !ok {
+						parsedVariables[sectionName] = make(map[string]string)
+					}
+
+					parsedVariables[sectionName][fieldName] = value
+				}
 			}
 		}
 	}
@@ -153,5 +152,36 @@ func (thisSerializer *Serializer) loadVariablesEnv() (map[string]string, error) 
 }
 
 func (thisSerializer *Serializer) getEnvPrefix() string {
-	return strings.ToUpper(thisSerializer.Factory.ApplicationName) + "_"
+	return strings.ToUpper(thisSerializer.Factory.ApplicationName) + "::" + strings.ToUpper(thisSerializer.ProfileName) + "::"
+}
+
+func (thisSerializer *Serializer) ParseEnvironmentVariable(environmentVariable string) (string, string, string, bool) {
+	if strings.Count(environmentVariable, "::") < 2 {
+		return "", "", "", false
+	}
+
+	if len(environmentVariable) < len(thisSerializer.Factory.ApplicationName + "::") {
+		return "", "", "", false
+	}
+
+	environmentVariable = environmentVariable[strings.Index(environmentVariable, "::")+2:]
+
+	profile := strings.ToLower(environmentVariable[0:strings.Index(environmentVariable, "::")])
+	environmentVariable = environmentVariable[strings.Index(environmentVariable, "::")+2:]
+	fieldName := strings.ToLower(environmentVariable)
+
+	if strings.Count(environmentVariable, "::") > 1 {
+		fieldName = strings.ToLower(environmentVariable[0:strings.Index(environmentVariable, "::")])
+	}
+
+	if fieldName != "attribute" {
+		return profile, fieldName, "", true
+	}
+
+	environmentVariable = environmentVariable[strings.Index(environmentVariable, "::")+2:]
+	sectionName := strings.ToLower(environmentVariable[0:strings.Index(environmentVariable, "::")])
+
+	fieldName = strings.ToLower(environmentVariable[strings.Index(environmentVariable, "::")+2:])
+
+	return profile, fieldName, sectionName, true
 }
