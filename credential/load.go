@@ -56,10 +56,14 @@ func LoadFromProfile(profileName string, sourceFactory *factory.Factory) (*Crede
 		}
 	}
 
-	loadedCredential.SetProfile(profileName)
+	profileErr := loadedCredential.SetProfile(profileName)
 
 	if envErr != nil && fileErr != nil {
 		return nil, fmt.Errorf("%v. %v", envErr, fileErr)
+	}
+
+	if profileErr != nil {
+		return nil, profileErr
 	}
 
 	return loadedCredential, nil
