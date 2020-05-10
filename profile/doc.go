@@ -15,9 +15,8 @@ limitations under the License.
 */
 
 /*
-Package factory provides an API for managing application-level credential details.
-
-Properties such as where credential files are stored, the name of the application, alternate username/password keys,
-and the credential file type are handled by factory.
-*/
-package factory
+Package profile contains all of the code for managing multiple credential files. A profile consists of a section
+in the default credentials file, with both the username and password, and a configuration file that is contained under
+the config directory and named after the profile.
+ */
+package profile

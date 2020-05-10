@@ -14,7 +14,7 @@ import (
 // set, the key values will be replaced with those names instead. All attributes will then be set in the format of
 // APP_NAME_ATTRIBUTE_NAME. The names of each environment variable are returned as a string array. This is to allow
 // for cleanup of the environment variables if you want them deleted.
-func Deploy(applicationName string, username string, password string, alternates map[string]string, attributes map[string]string) ([]string, error) {
+func Deploy(applicationName string, username string, password string, alternates map[string]string, attributes map[string]map[string]string) ([]string, error) {
 	var setEnvironmentVariables []string
 
 	if username != "" && applicationName != "" {
@@ -159,25 +159,32 @@ func deployPassword(prefix string, password string, alternates map[string]string
 	return "", nil
 }
 
-func deployAttributes(prefix string, attributes map[string]string) ([]string, error) {
+func deployAttributes(prefix string, attributes map[string]map[string]string) ([]string, error) {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 	var attributeKeys []string
 
 	for key, value := range attributes {
-		fullKey := prefix + "_" + strings.ToUpper(key)
+		subPrefix := prefix
 
-		if !keyRegex.MatchString(fullKey) {
-			return attributeKeys, errors.New(ERR_KEY_MUST_MATCH_REGEX)
+		if strings.ToUpper(key) != strings.ToUpper(global.DEFAULT_PROFILE_NAME) {
+			subPrefix = prefix + "_" + strings.ToUpper(key)
 		}
 
-		log.Trace().Str("key", fullKey).Msg("Setting attribute environment variable.")
-		setErr := os.Setenv(fullKey, value)
+		for subKey, subValue := range value {
+			fullKey := subPrefix + "_" + strings.ToUpper(subKey)
+			if !keyRegex.MatchString(fullKey) {
+				return attributeKeys, errors.New(ERR_KEY_MUST_MATCH_REGEX)
+			}
 
-		if setErr != nil {
-			return attributeKeys, setErr
+			log.Trace().Str("key", fullKey).Msg("Setting attribute environment variable.")
+			setErr := os.Setenv(fullKey, subValue)
+
+			if setErr != nil {
+				return attributeKeys, setErr
+			}
+
+			attributeKeys = append(attributeKeys, fullKey)
 		}
-
-		attributeKeys = append(attributeKeys, fullKey)
 	}
 
 	return attributeKeys, nil
