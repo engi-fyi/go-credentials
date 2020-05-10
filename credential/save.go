@@ -50,32 +50,28 @@ func (thisCredential *Credential) Save() error {
 // BUG(4): Respect alternates when saving to file.
 // TODO(1000): Should we actually load an existing credential or would the user expect the whole state to be serialized?
 func (thisCredential *Credential) saveIni() error {
-	if thisCredential.Factory.Initialized {
-		log.Trace().Msg("Saving credentials as ini.")
-		credentialFile, loadErr := loadCredentialIni(thisCredential.Factory)
+	log.Trace().Msg("Saving credentials as ini.")
+	credentialFile, loadErr := loadCredentialIni(thisCredential.Factory)
 
-		if loadErr != nil {
-			return loadErr
-		}
-
-		log.Trace().Msg("Existing credentials loaded from file.")
-
-		credentialFile.Section(thisCredential.Profile.Name).Key("username").SetValue(thisCredential.Username)
-		credentialFile.Section(thisCredential.Profile.Name).Key("password").SetValue(thisCredential.Password)
-		log.Trace().Msg("Username and password set in ini.")
-		saveErr := credentialFile.SaveTo(thisCredential.Factory.CredentialFile)
-
-		if saveErr != nil {
-			log.Error().Err(saveErr).Msg("Error saving credentials ini file.")
-			return saveErr
-		}
-
-		log.Trace().Msg("Credential ini file saved successfully.")
-
-		return nil
-	} else {
-		return errors.New(factory.ERR_FACTORY_NOT_INITIALIZED)
+	if loadErr != nil {
+		return loadErr
 	}
+
+	log.Trace().Msg("Existing credentials loaded from file.")
+
+	credentialFile.Section(thisCredential.Profile.Name).Key("username").SetValue(thisCredential.Username)
+	credentialFile.Section(thisCredential.Profile.Name).Key("password").SetValue(thisCredential.Password)
+	log.Trace().Msg("Username and password set in ini.")
+	saveErr := credentialFile.SaveTo(thisCredential.Factory.CredentialFile)
+
+	if saveErr != nil {
+		log.Error().Err(saveErr).Msg("Error saving credentials ini file.")
+		return saveErr
+	}
+
+	log.Trace().Msg("Credential ini file saved successfully.")
+
+	return nil
 }
 
 // TODO(7): Implement json format.

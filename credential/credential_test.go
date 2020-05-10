@@ -4,6 +4,7 @@ import (
 	"github.com/engi-fyi/go-credentials/environment"
 	"github.com/engi-fyi/go-credentials/factory"
 	"github.com/engi-fyi/go-credentials/global"
+	"github.com/engi-fyi/go-credentials/profile"
 	"os"
 	"strings"
 	"testing"
@@ -102,18 +103,8 @@ func TestCredentialAttributes(t *testing.T) {
 func TestCredentialSave(t *testing.T) {
 	assert := global.InitTest(t)
 
-	// Testing a factory that has been messed with
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	testFactory.Initialize()
-	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
-	messedWithCredential := Credential{}
-	messedWithCredential.Factory = testFactory
-	messedSave := messedWithCredential.Save()
-	assert.EqualError(messedSave, ERR_CREDENTIAL_NOT_INITIALIZED)
-
 	// Reinitialise everything
-	testFactory, factoryErr = factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
 	testFactory.Initialize()
 	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
@@ -123,6 +114,71 @@ func TestCredentialSave(t *testing.T) {
 	saveErr := testCredential.Save()
 	log.Info().Msg("Testing that files save correctly.")
 	assert.NoError(saveErr)
+
+	os.RemoveAll(testCredential.Factory.ParentDirectory)
+}
+
+func TestCredentialInterferedWithSave(t *testing.T) {
+	assert := global.InitTest(t)
+
+	// Testing a factory that has been messed with
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
+	testFactory.Initialize()
+	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
+	messedWithCredential := Credential{}
+	messedWithCredential.Factory = testFactory
+	messedSave := messedWithCredential.Save()
+	assert.EqualError(messedSave, ERR_CREDENTIAL_NOT_INITIALIZED)
+}
+
+func TestCredentialSaveProfileNotInitialized(t *testing.T) {
+	assert := global.InitTest(t)
+
+	// Reinitialise everything
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
+	testFactory.Initialize()
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
+	testCredential.Factory = &factory.Factory{}
+	saveErr := testCredential.Save()
+	log.Info().Msg("Testing that files save correctly.")
+	assert.Error(saveErr, factory.ERR_FACTORY_NOT_INITIALIZED)
+
+	os.RemoveAll(testCredential.Factory.ParentDirectory)
+}
+
+func TestCredentialSaveFactoryInconsistent(t *testing.T) {
+	assert := global.InitTest(t)
+
+	// Reinitialise everything
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
+	testFactory.Initialize()
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
+	testCredential.Factory.OutputType = global.OUTPUT_TYPE_INVALID
+	saveErr := testCredential.Save()
+	log.Info().Msg("Testing that files save correctly.")
+	assert.Error(saveErr, factory.ERR_FACTORY_NOT_INITIALIZED)
+
+	os.RemoveAll(testCredential.Factory.ParentDirectory)
+}
+
+func TestCredentialProfileNotInitialized(t *testing.T) {
+	assert := global.InitTest(t)
+
+	// Reinitialise everything
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
+	testFactory.Initialize()
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
+	testCredential.Profile = &profile.Profile{}
+	saveErr := testCredential.Save()
+	log.Info().Msg("Testing that files save correctly.")
+	assert.Error(saveErr, profile.ERR_PROFILE_NOT_INITIALIZED)
 
 	os.RemoveAll(testCredential.Factory.ParentDirectory)
 }
@@ -177,6 +233,34 @@ func TestCredentialLoadFromIni(t *testing.T) {
 	assert.EqualValues(global.TEST_VAR_ATTRIBUTE_VALUE+"v2", sav)
 
 	os.RemoveAll(loadedCredential.Factory.ParentDirectory)
+}
+
+func TestCredentialLoadFactoryNotInitialized(t *testing.T) {
+	assert := global.InitTest(t)
+
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
+	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
+	_, loadErr := Load(testFactory)
+	assert.EqualError(loadErr, factory.ERR_FACTORY_INCONSISTENT_STATE)
+}
+
+func TestCredentialLoadNoIniFile(t *testing.T) {
+	assert := global.InitTest(t)
+
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
+	os.RemoveAll(testFactory.ParentDirectory)
+	_, loadErr := Load(testFactory)
+	assert.Error(loadErr)
+}
+
+func TestCredentialLoadProfileNotInitialized(t *testing.T) {
+	assert := global.InitTest(t)
+
+	testFactory := &factory.Factory{}
+	_, loadErr := Load(testFactory)
+	assert.EqualError(loadErr, factory.ERR_FACTORY_INCONSISTENT_STATE)
 }
 
 func TestCredentialLoad(t *testing.T) {
@@ -293,6 +377,30 @@ func TestCredentialLoadEnv(t *testing.T) {
 	assert.Equal(global.TEST_VAR_USERNAME, testCredential.Username)
 	assert.Equal(global.TEST_VAR_PASSWORD, testCredential.Password)
 	assert.True(testCredential.Initialized)
+}
+
+func TestSaveJson(t *testing.T) {
+	assert := global.InitTest(t)
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
+	testCredential, credErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(credErr)
+	testCredential.Factory.SetOutputType(global.OUTPUT_TYPE_JSON)
+
+	saveErr := testCredential.saveJson()
+	assert.EqualError(saveErr, ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED)
+	saveErr = testCredential.Save()
+	assert.EqualError(saveErr, ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED)
+}
+
+func TestCredentialLoadJson(t *testing.T) {
+	assert := global.InitTest(t)
+
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
+	testFactory.SetOutputType(global.OUTPUT_TYPE_JSON)
+	_, loadErr := Load(testFactory)
+	assert.Error(loadErr)
 }
 
 func buildTestCredentials() (*Credential, error) {
