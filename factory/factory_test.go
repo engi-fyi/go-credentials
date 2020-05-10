@@ -13,6 +13,7 @@ func TestFactoryNew(t *testing.T) {
 	_, factoryErr := New("", false)
 	assert.EqualError(factoryErr, ERR_APPLICATION_NAME_BLANK)
 	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert.NoError(factoryErr)
 	assert.Equal(newFactory.ApplicationName, global.TEST_VAR_APPLICATION_NAME)
 	assert.False(newFactory.UseEnvironment)
 	assert.Equal(newFactory.OutputType, global.OUTPUT_TYPE_INI)

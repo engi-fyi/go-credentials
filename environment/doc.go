@@ -19,5 +19,5 @@ Package environment provides utility functions for accessing and managing enviro
 
 It is generally not called as part of the API, and like the global package is mainly used for utility within the rest
 of the go-credentials library.
- */
+*/
 package environment

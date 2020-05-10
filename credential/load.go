@@ -41,7 +41,7 @@ func Load(sourceFactory *factory.Factory) (*Credential, error) {
 /*
 LoadFromProfile specifically loads a Credential object from file. It will first load the relevant Credentials listed
 under the profileName in the credential file, then it will load the variables from the profile config file into Profile.
- */
+*/
 func LoadFromProfile(profileName string, sourceFactory *factory.Factory) (*Credential, error) {
 	var fileErr error
 	loadedCredential, envErr := LoadFromEnvironment(sourceFactory)

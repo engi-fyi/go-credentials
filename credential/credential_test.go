@@ -421,7 +421,7 @@ func TestCredentialProfiles(t *testing.T) {
 	assert.True(credentialOne.Profile.Initialized)
 
 	credentialTwo, ctErr = LoadFromProfile(global.TEST_VAR_SECOND_PROFILE_LABEL, testFactory)
-	assert.NoError(coErr)
+	assert.NoError(ctErr)
 	assert.Equal(global.TEST_VAR_SECOND_PROFILE_LABEL, credentialTwo.Profile.Name)
 	attrValue, attrErr = credentialTwo.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.NoError(attrErr)

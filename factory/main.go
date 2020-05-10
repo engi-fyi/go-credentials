@@ -153,7 +153,7 @@ func (factory *Factory) SetOutputType(outputType string) error {
 }
 
 // Set environment keys is a function that sets the alternates for both username and password at the same time. This
-// is the same as calling SetAlternateUsername, then calling SetAlternatePassword in a seperate call.
+// is the same as calling SetAlternateUsername, then calling SetAlternatePassword in a separate call.
 func (factory *Factory) SetEnvironmentKeys(usernameKey string, passwordKey string) error {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 

@@ -50,7 +50,7 @@ func New(credentialFactory *factory.Factory, username string, password string) (
 /*
 SetProfile sets the active profile on the Credential object. It does not change the value of the Credential's username
 or password, and only manages the attached Profile object.
- */
+*/
 func (thisCredential *Credential) SetProfile(profileName string) error {
 	if !thisCredential.Initialized {
 		return errors.New(ERR_CREDENTIAL_NOT_INITIALIZED)
@@ -109,6 +109,7 @@ func (thisCredential *Credential) SetAttribute(key string, value string) error {
 
 	return nil
 }
+
 /*
 GetAttribute retrieves an attribute that has been stored on the Credential's associated Profile. A key
 is passed in, and if the key does not have a value stored in the Profile, an error is returned.

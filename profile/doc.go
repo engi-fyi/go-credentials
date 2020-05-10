@@ -18,5 +18,5 @@ limitations under the License.
 Package profile contains all of the code for managing multiple credential files. A profile consists of a section
 in the default credentials file, with both the username and password, and a configuration file that is contained under
 the config directory and named after the profile.
- */
+*/
 package profile

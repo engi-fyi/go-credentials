@@ -29,7 +29,6 @@ func (thisCredential *Credential) Save() error {
 			return saveErr
 		}
 
-
 		if thisCredential.Factory.OutputType == global.OUTPUT_TYPE_JSON {
 			return thisCredential.saveJson()
 		} else if thisCredential.Factory.OutputType == global.OUTPUT_TYPE_INI {

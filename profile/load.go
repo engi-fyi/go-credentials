@@ -11,7 +11,7 @@ import (
 
 /*
 Load is responsible for loading a profile from file. If the file does not exist, an error is returned.
- */
+*/
 func Load(profileName string, credentialFactory *factory.Factory) (*Profile, error) {
 	log.Trace().Msg("Loading existing profile.")
 	newProfile := Profile{

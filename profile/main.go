@@ -12,7 +12,7 @@ import (
 /*
 New is responsible for constructing a new, blank profile to be used by a Credential. It is important to note, that
 this function does not save a profile, and this needs to be done using the Save() function.
- */
+*/
 func New(profileName string, credentialFactory *factory.Factory) (*Profile, error) {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
@@ -34,7 +34,7 @@ func New(profileName string, credentialFactory *factory.Factory) (*Profile, erro
 /*
 Remove deletes a profile configuration file, and deletes the in-memory representation of a profile. Remove is a
 permanent function, and you will not be able to recover a profile that has been Remove()d.
- */
+*/
 func Remove(thisProfile *Profile) error {
 	log.Trace().Str("profile", thisProfile.Name).Msg("Deleting profile.")
 	removeErr := os.Remove(thisProfile.ConfigFileLocation)
@@ -61,7 +61,7 @@ Example: No Section
 
 	// [a_section]
 	// a_key = a_value
- */
+*/
 func (thisProfile *Profile) SetAttribute(sectionName string, key string, value string) error {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
@@ -84,7 +84,7 @@ func (thisProfile *Profile) SetAttribute(sectionName string, key string, value s
 /*
 GetAttribute retrieves an attribute from a profile section. If the section name is blank, the attribute will be
 retrieved from the default store which has no section name.
- */
+*/
 func (thisProfile *Profile) GetAttribute(sectionName string, key string) string {
 	if sectionName == "" {
 		sectionName = global.NO_SECTION_KEY
@@ -112,7 +112,7 @@ Example: Map Structure
 	b_section:
 		my_key: my_value
 		b_key: b_value
- */
+*/
 func (thisProfile *Profile) GetAllAttributes() map[string]map[string]string {
 	return thisProfile.attributes
 }
@@ -120,7 +120,7 @@ func (thisProfile *Profile) GetAllAttributes() map[string]map[string]string {
 /*
 GetAllSection attributes is responsible for returning all of the attributes for one section. It returns this as a simple
 map with the key and value for each attribute only. There are no section references returned by this function.
- */
+*/
 func (thisProfile *Profile) GetAllSectionAttributes(sectionName string) (map[string]string, error) {
 	if _, ok := thisProfile.attributes[sectionName]; ok {
 		return thisProfile.attributes[sectionName], nil
@@ -132,7 +132,7 @@ func (thisProfile *Profile) GetAllSectionAttributes(sectionName string) (map[str
 /*
 DeleteAttribute removes an attribute from a profile. It is important to note that until the Profile is Save()d, the
 attribute may still exist on the file system.
- */
+*/
 func (thisProfile *Profile) DeleteAttribute(sectionName string, key string) error {
 	if len(thisProfile.GetAttribute(sectionName, key)) == 0 {
 		return errors.New(ERR_DELETED_ATTRIBUTE_NOT_EXIST)
