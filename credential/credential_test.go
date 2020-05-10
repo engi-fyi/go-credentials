@@ -398,7 +398,7 @@ func TestCredentialProfiles(t *testing.T) {
 	os.RemoveAll(testFactory.ParentDirectory)
 }
 
-func ProfileTest(t *testing.T) {
+func TestProfile(t *testing.T) {
 	assert := global.InitTest(t)
 
 	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
