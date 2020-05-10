@@ -90,7 +90,11 @@ func (thisCredential *Credential) SetAttribute(key string, value string) error {
 		if keyRegex.MatchString(key) {
 			log.Trace().Str("key", key).Msg("Setting attribute.")
 
-			thisCredential.Profile.SetAttribute(global.NO_SECTION_KEY, key, value)
+			attributeErr := thisCredential.Profile.SetAttribute(global.NO_SECTION_KEY, key, value)
+
+			if attributeErr != nil {
+				return attributeErr
+			}
 		} else {
 			return errors.New(ERR_KEY_MUST_MATCH_REGEX)
 		}
