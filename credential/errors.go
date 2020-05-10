@@ -7,3 +7,4 @@ const ERR_KEY_MUST_MATCH_REGEX = "sorry the key must only include numbers, lette
 const ERR_FACTORY_PRIVATE_ATTEMPT_DEPLOY = "you have attempted to deploy environment variables but your factory is private"
 const ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED = "sorry, that feature has not been implemented yet"
 const ERR_CREDENTIAL_NOT_INITIALIZED = "sorry, this credential has not been initialized"
+const ERR_NOT_INITIALIZED = "sorry something has not been initialized, make sure you use New and do not create a struct manually"

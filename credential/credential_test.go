@@ -1,12 +1,11 @@
 package credential
 
 import (
-	"github.com/engi-fyi/go-credentials/environment"
 	"github.com/engi-fyi/go-credentials/factory"
 	"github.com/engi-fyi/go-credentials/global"
 	"github.com/engi-fyi/go-credentials/profile"
+	"github.com/engi-fyi/go-credentials/serializer"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/rs/zerolog/log"
@@ -129,7 +128,7 @@ func TestCredentialInterferedWithSave(t *testing.T) {
 	messedWithCredential := Credential{}
 	messedWithCredential.Factory = testFactory
 	messedSave := messedWithCredential.Save()
-	assert.EqualError(messedSave, ERR_CREDENTIAL_NOT_INITIALIZED)
+	assert.EqualError(messedSave, ERR_NOT_INITIALIZED)
 }
 
 func TestCredentialSaveProfileNotInitialized(t *testing.T) {
@@ -193,7 +192,7 @@ func TestCredentialLoadFromIni(t *testing.T) {
 	assert.True(testFactory.Initialized)
 
 	log.Info().Msg("Testing load with no file present.")
-	_, failLoadErr := LoadFromIniFile(global.DEFAULT_PROFILE_NAME, testFactory)
+	_, failLoadErr := LoadFromProfile(global.DEFAULT_PROFILE_NAME, testFactory)
 	assert.Error(failLoadErr)
 
 	log.Info().Msg("Testing ini basic load.")
@@ -210,7 +209,7 @@ func TestCredentialLoadFromIni(t *testing.T) {
 	testCredential = nil
 
 	log.Info().Msg("Reloading temporary credentials")
-	loadedCredential, loadErr := LoadFromIniFile(global.DEFAULT_PROFILE_NAME, testFactory)
+	loadedCredential, loadErr := LoadFromProfile(global.DEFAULT_PROFILE_NAME, testFactory)
 	assert.NoError(loadErr)
 	assert.Equal(global.TEST_VAR_USERNAME, loadedCredential.Username)
 	assert.Equal(global.TEST_VAR_PASSWORD, loadedCredential.Password)
@@ -223,7 +222,7 @@ func TestCredentialLoadFromIni(t *testing.T) {
 	rsErr := loadedCredential.Save()
 	assert.NoError(rsErr)
 
-	loadedCredential, loadErr = LoadFromIniFile(global.DEFAULT_PROFILE_NAME, testFactory)
+	loadedCredential, loadErr = LoadFromProfile(global.DEFAULT_PROFILE_NAME, testFactory)
 	assert.NoError(loadErr)
 	fav, favErr := loadedCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	sav, savErr := loadedCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL + "v2")
@@ -242,7 +241,7 @@ func TestCredentialLoadFactoryNotInitialized(t *testing.T) {
 	assert.NoError(factoryErr)
 	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
 	_, loadErr := Load(testFactory)
-	assert.EqualError(loadErr, factory.ERR_FACTORY_INCONSISTENT_STATE)
+	assert.EqualError(loadErr, serializer.ERR_UNRECOGNIZED_OUTPUT_TYPE)
 }
 
 func TestCredentialLoadNoIniFile(t *testing.T) {
@@ -260,7 +259,7 @@ func TestCredentialLoadProfileNotInitialized(t *testing.T) {
 
 	testFactory := &factory.Factory{}
 	_, loadErr := Load(testFactory)
-	assert.EqualError(loadErr, factory.ERR_FACTORY_INCONSISTENT_STATE)
+	assert.EqualError(loadErr, ERR_FACTORY_MUST_BE_INITIALIZED)
 }
 
 func TestCredentialLoad(t *testing.T) {
@@ -276,15 +275,21 @@ func TestCredentialLoad(t *testing.T) {
 	_, failLoadErr := Load(testFactory)
 	assert.Error(failLoadErr)
 
+
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
 	log.Info().Msg("Testing basic environment load.")
 	os.Setenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL, global.TEST_VAR_USERNAME)
 	os.Setenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL, global.TEST_VAR_PASSWORD)
+	testFactory.SetOutputType(global.OUTPUT_TYPE_ENV)
 	loadedCredential, envLoadErr := Load(testFactory)
 	assert.NoError(envLoadErr)
 	assert.Equal(global.TEST_VAR_USERNAME, loadedCredential.Username)
 	assert.Equal(global.TEST_VAR_PASSWORD, loadedCredential.Password)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
 
-	log.Info().Msg("Testing to ensure environment variables are loaded before file credentials.")
+	log.Info().Msg("Saving credential to test load.")
 	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME_ALTERNATE, global.TEST_VAR_PASSWORD_ALTERNATE)
 	assert.NoError(newErr)
 	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE, testCredential.Username)
@@ -296,16 +301,6 @@ func TestCredentialLoad(t *testing.T) {
 	saveErr := testCredential.Save()
 	assert.NoError(saveErr)
 
-	log.Info().Msg("Testing that environment variables are loaded.")
-	loadedCredential, envLoadErr = Load(testFactory)
-	assert.NoError(envLoadErr)
-	assert.Equal(global.TEST_VAR_USERNAME, loadedCredential.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD, loadedCredential.Password)
-
-	environment.CleanEnvironment([]string{
-		global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL,
-		global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL})
-
 	log.Info().Msg("Testing that file credentials are loaded when no environment variables present.")
 	loadedCredential, envLoadErr = Load(testFactory)
 	assert.NoError(envLoadErr)
@@ -315,68 +310,38 @@ func TestCredentialLoad(t *testing.T) {
 	os.RemoveAll(testCredential.Factory.ParentDirectory)
 }
 
-func TestCredentialDeployEnv(t *testing.T) {
+
+func TestCredentialSaveEnv(t *testing.T) {
 	assert := global.InitTest(t)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
 
 	testCredentials, credErr := buildTestCredentials()
+	testCredentials.Factory.SetOutputType(global.OUTPUT_TYPE_ENV)
 	assert.NoError(credErr)
 
 	_, exists := os.LookupEnv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
 	assert.False(exists)
-	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_PASSWORD_ALTERNATE_LABEL)
+	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
 	assert.False(exists)
 	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
 	assert.False(exists)
 
 	testCredentials.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	deployErr := testCredentials.DeployEnv()
-	log.Info().Strs("env_vars", testCredentials.environmentVariables).Msg("Checking environment variables.")
+	deployErr := testCredentials.Save()
 	assert.NoError(deployErr)
 
 	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
 	assert.True(exists)
-	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_PASSWORD_ALTERNATE_LABEL)
-	assert.False(exists)
+	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
+	assert.True(exists)
 	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
 	assert.True(exists)
 
-	environment.CleanEnvironment(testCredentials.GetEnvironmentVariables())
-}
-
-// TODO: Implement tests for LoadFromEnvironment()
-func TestCredentialLoadEnv(t *testing.T) {
-	assert := global.InitTest(t)
-	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	testFactory.Initialize()
-
-	usernameKey := strings.ToUpper(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
-	passwordKey := strings.ToUpper(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
-	attributeKey := strings.ToUpper(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
-	alternateUsernameKey := strings.ToUpper(global.TEST_VAR_ENVIRONMENT_USERNAME_ALTERNATE_LABEL)
-	alternatePasswordKey := strings.ToUpper(global.TEST_VAR_ENVIRONMENT_PASSWORD_ALTERNATE_LABEL)
-
-	os.Setenv(usernameKey, global.TEST_VAR_USERNAME)
-	os.Setenv(passwordKey, global.TEST_VAR_PASSWORD)
-	os.Setenv(attributeKey, global.TEST_VAR_ATTRIBUTE_VALUE)
-
-	testCredential, credErr := LoadFromEnvironment(testFactory)
-	assert.NoError(credErr)
-	assert.Equal(global.TEST_VAR_USERNAME, testCredential.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD, testCredential.Password)
-	attrValue, _ := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
-	assert.True(testCredential.Initialized)
-	environment.CleanEnvironment([]string{usernameKey, passwordKey, attributeKey})
-
-	testFactory.SetAlternateUsername(global.TEST_VAR_USERNAME_ALTERNATE_LABEL)
-	testFactory.SetAlternatePassword(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
-	os.Setenv(alternateUsernameKey, global.TEST_VAR_USERNAME)
-	os.Setenv(alternatePasswordKey, global.TEST_VAR_PASSWORD)
-	testCredential, credErr = LoadFromEnvironment(testFactory)
-	assert.NoError(credErr)
-	assert.Equal(global.TEST_VAR_USERNAME, testCredential.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD, testCredential.Password)
-	assert.True(testCredential.Initialized)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
+	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
 }
 
 func TestCredentialProfiles(t *testing.T) {
@@ -388,15 +353,13 @@ func TestCredentialProfiles(t *testing.T) {
 	testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
 	testCredential.Save()
 
-	credentialOne, coErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	credentialOne, coErr := NewProfile(global.TEST_VAR_FIRST_PROFILE_LABEL, testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(coErr)
-	credentialOne.SetProfile(global.TEST_VAR_FIRST_PROFILE_LABEL)
 	credentialOne.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
 	credentialOne.Save()
 
-	credentialTwo, ctErr := New(testFactory, global.TEST_VAR_USERNAME_ALTERNATE, global.TEST_VAR_PASSWORD_ALTERNATE)
+	credentialTwo, ctErr := NewProfile(global.TEST_VAR_SECOND_PROFILE_LABEL, testFactory, global.TEST_VAR_USERNAME_ALTERNATE, global.TEST_VAR_PASSWORD_ALTERNATE)
 	assert.NoError(ctErr)
-	credentialTwo.SetProfile(global.TEST_VAR_SECOND_PROFILE_LABEL)
 	credentialTwo.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
 	credentialTwo.Save()
 
@@ -432,30 +395,6 @@ func TestCredentialProfiles(t *testing.T) {
 	assert.True(credentialTwo.Profile.Initialized)
 
 	os.RemoveAll(testFactory.ParentDirectory)
-}
-
-func TestSaveJson(t *testing.T) {
-	assert := global.InitTest(t)
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	testCredential, credErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
-	assert.NoError(credErr)
-	testCredential.Factory.SetOutputType(global.OUTPUT_TYPE_JSON)
-
-	saveErr := testCredential.saveJson()
-	assert.EqualError(saveErr, ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED)
-	saveErr = testCredential.Save()
-	assert.EqualError(saveErr, ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED)
-}
-
-func TestCredentialLoadJson(t *testing.T) {
-	assert := global.InitTest(t)
-
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	testFactory.SetOutputType(global.OUTPUT_TYPE_JSON)
-	_, loadErr := Load(testFactory)
-	assert.Error(loadErr)
 }
 
 func buildTestCredentials() (*Credential, error) {

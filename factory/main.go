@@ -144,7 +144,9 @@ func (factory *Factory) GetAlternatePassword() string {
 //
 // TODO(7): Implement json format.
 func (factory *Factory) SetOutputType(outputType string) error {
-	if outputType == global.OUTPUT_TYPE_INI || outputType == global.OUTPUT_TYPE_JSON {
+	if outputType == global.OUTPUT_TYPE_INI ||
+		outputType == global.OUTPUT_TYPE_JSON ||
+		outputType == global.OUTPUT_TYPE_ENV {
 		factory.OutputType = outputType
 		return nil
 	} else {

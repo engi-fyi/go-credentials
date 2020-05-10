@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/engi-fyi/go-credentials/environment"
 	"github.com/engi-fyi/go-credentials/factory"
 	"github.com/engi-fyi/go-credentials/global"
 	"github.com/engi-fyi/go-credentials/profile"
@@ -18,6 +17,10 @@ go-credential library. username and password are the user's base credentials. No
 the initial creation of a Credential object, and these are stored in the Profile.
 */
 func New(credentialFactory *factory.Factory, username string, password string) (*Credential, error) {
+	return NewProfile(global.DEFAULT_PROFILE_NAME, credentialFactory, username, password)
+}
+
+func NewProfile(profileName string, credentialFactory *factory.Factory, username string, password string) (*Credential, error) {
 	log.Trace().Msg("Building credential object.")
 
 	if credentialFactory == nil {
@@ -32,50 +35,21 @@ func New(credentialFactory *factory.Factory, username string, password string) (
 		return nil, errors.New(ERR_USERNAME_OR_PASSWORD_NOT_SET)
 	}
 
-	newCredential := &Credential{
-		Username:    username,
-		Password:    password,
-		Initialized: true,
-		Factory:     credentialFactory,
-	}
-	profileErr := newCredential.SetProfile(global.DEFAULT_PROFILE_NAME)
+	newProfile, profileErr := profile.New(profileName, credentialFactory)
 
 	if profileErr != nil {
 		return nil, profileErr
 	}
 
+	newCredential := &Credential{
+		Username:    username,
+		Password:    password,
+		Initialized: true,
+		Factory:     credentialFactory,
+		Profile: 	 newProfile,
+	}
+
 	return newCredential, nil
-}
-
-/*
-SetProfile sets the active profile on the Credential object. It does not change the value of the Credential's username
-or password, and only manages the attached Profile object.
-*/
-func (thisCredential *Credential) SetProfile(profileName string) error {
-	if !thisCredential.Initialized {
-		return errors.New(ERR_CREDENTIAL_NOT_INITIALIZED)
-	}
-
-	log.Trace().Msg("Attempting to load profile from file.")
-	myProfile, profileErr := profile.Load(profileName, thisCredential.Factory)
-
-	if profileErr != nil {
-		if profileErr.Error() == profile.ERR_PROFILE_DID_NOT_EXIST {
-			log.Trace().Msg("Profile did not exist, creating new.")
-			myProfile, profileErr = profile.New(profileName, thisCredential.Factory)
-		} else {
-			log.Error().Err(profileErr).Msg("Sorry there was an error loading the profile.")
-			return profileErr
-		}
-	}
-
-	if !myProfile.Initialized {
-		log.Error().Err(profileErr).Msg("The profile has not been initialized.")
-		return errors.New(profile.ERR_PROFILE_NOT_INITIALIZED)
-	}
-
-	thisCredential.Profile = myProfile
-	return nil
 }
 
 /*
@@ -151,7 +125,7 @@ Example 2: Alternates Usage
 
 If credentialFactory.Alternates["username"] has been set to ACCESS_TOKEN, then if an environment variable named
 TEST_APP_ACCESS_TOKEN exists its value will be stored in the resulting Credential object's Username property.
-*/
+
 func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error) {
 	log.Trace().Msg("Creating credentials from environment variable.")
 	values, loadErr := environment.Load(credentialFactory.ApplicationName, credentialFactory.GetAlternates())
@@ -200,6 +174,7 @@ func LoadFromEnvironment(credentialFactory *factory.Factory) (*Credential, error
 
 	return credential, nil
 }
+*/
 
 /*DeployEnv is used in cases where your application requires environment variables, but your users configure their
 credentials via file-based methods. Simply Load the Credential from a file, then DeployEnv will deploy the variables
@@ -209,7 +184,7 @@ as follows:
 
 Currently, we do not export the Password property to the environment, but it is in the pipeline to enable this in
 the future.
-*/
+
 // TODO(3): Export Password via Boolean
 func (thisCredential *Credential) DeployEnv() error {
 	if thisCredential.Factory.UseEnvironment {
@@ -226,6 +201,7 @@ func (thisCredential *Credential) DeployEnv() error {
 		return errors.New(ERR_FACTORY_PRIVATE_ATTEMPT_DEPLOY)
 	}
 }
+*/
 
 /*
 GetEnvironmentVariables retrieves a list of internally managed environment variables that have been set by
@@ -233,9 +209,4 @@ go-credentials. This value only has a value if DeployEnv has been used.
 */
 func (thisCredential *Credential) GetEnvironmentVariables() []string {
 	return thisCredential.environmentVariables
-}
-
-// TODO(7): Implement json format.
-func loadJson(factory *factory.Factory) (*Credential, error) {
-	return nil, errors.New(ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED)
 }
