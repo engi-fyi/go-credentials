@@ -8,9 +8,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Save is responsible for saving the credential at ~/.application_name/credentials in the specified output format
-// that has been set on the Credentials' Factory object.
-//
+/*
+Save is responsible for saving the credential at ~/.application_name/credentials in the specified output format
+that has been set on the Credentials' Factory object.
+*/
 // TODO(7): Implement json format.
 func (thisCredential *Credential) Save() error {
 	if !thisCredential.Initialized {

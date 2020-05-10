@@ -2,6 +2,10 @@ package profile
 
 import "gopkg.in/ini.v1"
 
+/*
+Save is responsible for save a profile from file. The profile file will be saved to config/profile_name in the
+credential directory.
+*/
 func (thisProfile *Profile) Save() error {
 	myFile := ini.Empty()
 

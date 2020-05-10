@@ -10,11 +10,12 @@ import (
 	"os"
 )
 
-// Load is the default method of loading existing credentials. First it will attempt to load credentials from the
-// environment, as they take precedence over file-based credentials. If that is not successful, it will attempt to
-// load credentials from the credentials file using the appropriate format set in the sourceFactory. If the file doesn't
-// exist or is in an unexpected format, an error will be thrown.
-//
+/*
+Load is the default method of loading existing credentials. First it will attempt to load credentials from the
+environment, as they take precedence over file-based credentials. If that is not successful, it will attempt to
+load credentials from the credentials file using the appropriate format set in the sourceFactory. If the file doesn't
+exist or is in an unexpected format, an error will be thrown.
+*/
 // TODO(7): Implement json format.
 func Load(sourceFactory *factory.Factory) (*Credential, error) {
 	var fileErr error
@@ -24,7 +25,7 @@ func Load(sourceFactory *factory.Factory) (*Credential, error) {
 		if sourceFactory.OutputType == global.OUTPUT_TYPE_JSON {
 			loadedCredential, fileErr = loadJson(sourceFactory)
 		} else if sourceFactory.OutputType == global.OUTPUT_TYPE_INI {
-			loadedCredential, fileErr = LoadFromIniFile(sourceFactory)
+			loadedCredential, fileErr = LoadFromIniFile(global.DEFAULT_PROFILE_NAME, sourceFactory)
 		} else {
 			return nil, errors.New(factory.ERR_FACTORY_INCONSISTENT_STATE)
 		}
@@ -37,20 +38,49 @@ func Load(sourceFactory *factory.Factory) (*Credential, error) {
 	return loadedCredential, nil
 }
 
-// LoadFromIniFile is responsible for loading a Credential object as in the ini format at ~/.app_name/credentials.
-// username and password are stored under the default heading, and all attributes are stored under the attributes
-// heading
-//
-// Example Credential File
-// 		[default]
-//		username=my_username
-//		password=my_password01
-//
-//		[attributes]
-//		an_attribute=the value of an attribute
-//
-// BUG(4): Respect alternates when loading from file.
-func LoadFromIniFile(fromFactory *factory.Factory) (*Credential, error) {
+/*
+LoadFromProfile specifically loads a Credential object from file. It will first load the relevant Credentials listed
+under the profileName in the credential file, then it will load the variables from the profile config file into Profile.
+ */
+func LoadFromProfile(profileName string, sourceFactory *factory.Factory) (*Credential, error) {
+	var fileErr error
+	loadedCredential, envErr := LoadFromEnvironment(sourceFactory)
+
+	if envErr != nil || !loadedCredential.Initialized {
+		if sourceFactory.OutputType == global.OUTPUT_TYPE_JSON {
+			loadedCredential, fileErr = loadJson(sourceFactory)
+		} else if sourceFactory.OutputType == global.OUTPUT_TYPE_INI {
+			loadedCredential, fileErr = LoadFromIniFile(profileName, sourceFactory)
+		} else {
+			return nil, errors.New(factory.ERR_FACTORY_INCONSISTENT_STATE)
+		}
+	}
+
+	loadedCredential.SetProfile(profileName)
+
+	if envErr != nil && fileErr != nil {
+		return nil, fmt.Errorf("%v. %v", envErr, fileErr)
+	}
+
+	return loadedCredential, nil
+}
+
+/*
+LoadFromIniFile is responsible for loading a Credential object as in the ini format at ~/.app_name/credentials.
+username and password are stored under the default heading, and all attributes are stored under the attributes
+heading
+
+Example Credential File
+		[default]
+		username=my_username
+		password=my_password01
+
+		[attributes]
+		an_attribute=the value of an attribute
+
+BUG(4): Respect alternates when loading from file.
+*/
+func LoadFromIniFile(profileName string, fromFactory *factory.Factory) (*Credential, error) {
 	if fromFactory.Initialized {
 		credentialFile, loadErr := loadCredentialIni(fromFactory)
 
@@ -60,7 +90,7 @@ func LoadFromIniFile(fromFactory *factory.Factory) (*Credential, error) {
 			return nil, loadErr
 		}
 
-		loadedCredential, credErr := getCredentialFromIni(fromFactory, credentialFile)
+		loadedCredential, credErr := getCredentialFromIni(profileName, fromFactory, credentialFile)
 
 		if credErr != nil {
 			return nil, credErr
@@ -113,11 +143,11 @@ func loadCredentialIni(fromFactory *factory.Factory) (*ini.File, error) {
 	}
 }
 
-func getCredentialFromIni(fromFactory *factory.Factory, credentialFile *ini.File) (*Credential, error) {
+func getCredentialFromIni(profileName string, fromFactory *factory.Factory, credentialFile *ini.File) (*Credential, error) {
 	log.Trace().Msg("Creating credential from ini.")
 	loadedCredential, newErr := New(fromFactory,
-		credentialFile.Section("default").Key("username").String(),
-		credentialFile.Section("default").Key("password").String())
+		credentialFile.Section(profileName).Key("username").String(),
+		credentialFile.Section(profileName).Key("password").String())
 
 	if newErr != nil {
 		return nil, newErr
