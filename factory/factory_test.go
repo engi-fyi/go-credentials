@@ -39,8 +39,7 @@ func TestFactoryInitialize(t *testing.T) {
 	assert.Equal(testGetConfigDirectory(testFactory.ApplicationName), testFactory.ConfigDirectory)
 	assert.DirExists(testFactory.ConfigDirectory)
 
-	cleanupErr := global.TestCleanup(testFactory.ParentDirectory, testFactory.CredentialFile)
-	assert.NoError(cleanupErr)
+	os.RemoveAll(testFactory.ParentDirectory)
 }
 
 func TestSetOutputType(t *testing.T) {

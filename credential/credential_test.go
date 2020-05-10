@@ -110,7 +110,7 @@ func TestCredentialSave(t *testing.T) {
 	messedWithCredential := Credential{}
 	messedWithCredential.Factory = testFactory
 	messedSave := messedWithCredential.Save()
-	assert.EqualError(messedSave, factory.ERR_FACTORY_INCONSISTENT_STATE)
+	assert.EqualError(messedSave, ERR_CREDENTIAL_NOT_INITIALIZED)
 
 	// Reinitialise everything
 	testFactory, factoryErr = factory.New(global.TEST_VAR_APPLICATION_NAME, false)
@@ -124,9 +124,7 @@ func TestCredentialSave(t *testing.T) {
 	log.Info().Msg("Testing that files save correctly.")
 	assert.NoError(saveErr)
 
-	global.TestCleanup(
-		testCredential.Factory.ParentDirectory,
-		testCredential.Factory.CredentialFile)
+	os.RemoveAll(testCredential.Factory.ParentDirectory)
 }
 
 func TestCredentialLoadFromIni(t *testing.T) {
@@ -178,9 +176,7 @@ func TestCredentialLoadFromIni(t *testing.T) {
 	assert.EqualValues(global.TEST_VAR_ATTRIBUTE_VALUE, fav)
 	assert.EqualValues(global.TEST_VAR_ATTRIBUTE_VALUE+"v2", sav)
 
-	global.TestCleanup(
-		loadedCredential.Factory.ParentDirectory,
-		loadedCredential.Factory.CredentialFile)
+	os.RemoveAll(loadedCredential.Factory.ParentDirectory)
 }
 
 func TestCredentialLoad(t *testing.T) {
@@ -232,9 +228,7 @@ func TestCredentialLoad(t *testing.T) {
 	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE, loadedCredential.Username)
 	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE, loadedCredential.Password)
 
-	global.TestCleanup(
-		testFactory.ParentDirectory,
-		testFactory.CredentialFile)
+	os.RemoveAll(testCredential.Factory.ParentDirectory)
 }
 
 func TestCredentialDeployEnv(t *testing.T) {
@@ -252,6 +246,7 @@ func TestCredentialDeployEnv(t *testing.T) {
 
 	testCredentials.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
 	deployErr := testCredentials.DeployEnv()
+	log.Info().Strs("env_vars", testCredentials.environmentVariables).Msg("Checking environment variables.")
 	assert.NoError(deployErr)
 
 	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)

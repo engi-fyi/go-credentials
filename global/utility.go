@@ -9,18 +9,10 @@ import (
 )
 
 // TestCleanup is a utility function that deletes both the configurationDirectory and credentialFile.
-func TestCleanup(configurationDirectory string, credentialFile string) error {
+func TestCleanup(parentDirectory string) error {
 	log.Info().Msg("Cleaning up our global files.")
-	if _, credStatErr := os.Stat(credentialFile); !os.IsNotExist(credStatErr) {
-		credErr := os.Remove(credentialFile)
-
-		if credErr != nil {
-			return credErr
-		}
-	}
-
-	if _, confStatErr := os.Stat(credentialFile); !os.IsNotExist(confStatErr) {
-		confErr := os.Remove(configurationDirectory)
+	if _, confStatErr := os.Stat(parentDirectory); !os.IsNotExist(confStatErr) {
+		confErr := os.RemoveAll(parentDirectory)
 
 		if confErr != nil {
 			return confErr

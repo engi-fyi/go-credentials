@@ -6,3 +6,4 @@ const ERR_FACTORY_MUST_BE_INITIALIZED = "sorry the factory must be created corre
 const ERR_KEY_MUST_MATCH_REGEX = "sorry the key must only include numbers, letters and underscores [0-9A-Za-z_]"
 const ERR_FACTORY_PRIVATE_ATTEMPT_DEPLOY = "you have attempted to deploy environment variables but your factory is private"
 const ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED = "sorry, that feature has not been implemented yet"
+const ERR_CREDENTIAL_NOT_INITIALIZED = "sorry, this credential has not been initialized"

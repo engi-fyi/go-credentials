@@ -50,8 +50,9 @@ func TestDeploySimpleNoPassword(t *testing.T) {
 func TestDeployAttributes(t *testing.T) {
 	assert := global.InitTest(t)
 
-	attributes := make(map[string]string)
-	attributes[global.TEST_VAR_ATTRIBUTE_NAME_LABEL] = global.TEST_VAR_ATTRIBUTE_VALUE
+	attributes := make(map[string]map[string]string)
+	attributes[global.DEFAULT_PROFILE_NAME] = make(map[string]string)
+	attributes[global.DEFAULT_PROFILE_NAME][global.TEST_VAR_ATTRIBUTE_NAME_LABEL] = global.TEST_VAR_ATTRIBUTE_VALUE
 
 	log.Info().Msg("Testing deploy with attributes and no alternates.")
 	setKeys, deployErr := Deploy(
@@ -94,8 +95,9 @@ func TestDeployAttributesAndAlternates(t *testing.T) {
 	alternates := make(map[string]string)
 	alternates["username"] = global.TEST_VAR_USERNAME_ALTERNATE_LABEL
 	alternates["password"] = global.TEST_VAR_PASSWORD_ALTERNATE_LABEL
-	attributes := make(map[string]string)
-	attributes[global.TEST_VAR_ATTRIBUTE_NAME_LABEL] = global.TEST_VAR_ATTRIBUTE_VALUE
+	attributes := make(map[string]map[string]string)
+	attributes[global.DEFAULT_PROFILE_NAME] = make(map[string]string)
+	attributes[global.DEFAULT_PROFILE_NAME][global.TEST_VAR_ATTRIBUTE_NAME_LABEL] = global.TEST_VAR_ATTRIBUTE_VALUE
 
 	log.Info().Msg("Testing deploy with attributes and alternates.")
 

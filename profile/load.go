@@ -11,13 +11,12 @@ import (
 
 func Load(profileName string, credentialFactory *factory.Factory) (*Profile, error) {
 	log.Trace().Msg("Loading existing profile.")
-	log.Trace().Msg("Initializing blank profile.")
 	newProfile := Profile{
-		Name: profileName,
+		Name:               profileName,
 		ConfigFileLocation: credentialFactory.ConfigDirectory + profileName,
-		attributes: make(map[string]map[string]string),
-		Initialized: true,
-		Factory: credentialFactory,
+		attributes:         make(map[string]map[string]string),
+		Initialized:        true,
+		Factory:            credentialFactory,
 	}
 
 	log.Trace().Msg("Loading profile with details from file.")

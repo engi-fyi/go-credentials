@@ -17,11 +17,11 @@ func New(profileName string, credentialFactory *factory.Factory) (*Profile, erro
 	}
 
 	newProfile := Profile{
-		Name: profileName,
+		Name:               profileName,
 		ConfigFileLocation: credentialFactory.ConfigDirectory + profileName,
-		attributes: make(map[string]map[string]string),
-		Initialized: true,
-		Factory: credentialFactory,
+		attributes:         make(map[string]map[string]string),
+		Initialized:        true,
+		Factory:            credentialFactory,
 	}
 
 	return &newProfile, nil
@@ -38,7 +38,7 @@ func (thisProfile *Profile) SetAttribute(sectionName string, key string, value s
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 	if sectionName == "" {
-		sectionName = NO_SECTION_KEY
+		sectionName = global.NO_SECTION_KEY
 	}
 
 	if !keyRegex.MatchString(sectionName) || !keyRegex.MatchString(key) {
@@ -46,7 +46,7 @@ func (thisProfile *Profile) SetAttribute(sectionName string, key string, value s
 	}
 
 	if _, ok := thisProfile.attributes[sectionName]; !ok {
-		thisProfile.attributes[sectionName] = make (map[string]string)
+		thisProfile.attributes[sectionName] = make(map[string]string)
 	}
 
 	thisProfile.attributes[sectionName][key] = value
@@ -55,7 +55,7 @@ func (thisProfile *Profile) SetAttribute(sectionName string, key string, value s
 
 func (thisProfile *Profile) GetAttribute(sectionName string, key string) string {
 	if sectionName == "" {
-		sectionName = NO_SECTION_KEY
+		sectionName = global.NO_SECTION_KEY
 	}
 
 	if _, ok := thisProfile.attributes[sectionName]; ok {
@@ -65,6 +65,18 @@ func (thisProfile *Profile) GetAttribute(sectionName string, key string) string 
 	}
 
 	return "" // attribute cannot have a blank value, so always assume a blank value was a NOT_FOUND err
+}
+
+func (thisProfile *Profile) GetAllAttributes() map[string]map[string]string {
+	return thisProfile.attributes
+}
+
+func (thisProfile *Profile) GetAllSectionAttributes(sectionName string) (map[string]string, error) {
+	if _, ok := thisProfile.attributes[sectionName]; ok {
+		return thisProfile.attributes[sectionName], nil
+	} else {
+		return nil, errors.New(ERR_SECTION_NOT_EXIST)
+	}
 }
 
 func (thisProfile *Profile) DeleteAttribute(sectionName string, key string) error {
