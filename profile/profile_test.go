@@ -8,7 +8,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)

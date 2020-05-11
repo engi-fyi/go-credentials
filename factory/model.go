@@ -1,5 +1,7 @@
 package factory
 
+import "github.com/rs/zerolog"
+
 // Factory is the object that is used to store all of the application-level global configuration. All the settings
 // for saving, setting, searching and finding credentials are in this object.
 //
@@ -18,5 +20,6 @@ type Factory struct {
 	UseEnvironment  bool
 	Initialized     bool
 	OutputType      string
+	Log 			*zerolog.Logger
 	alternates      map[string]string
 }

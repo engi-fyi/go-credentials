@@ -11,19 +11,20 @@ import (
 New is responsible for constructing a new, blank profile to be used by a Credential. It is important to note, that
 this function does not save a profile, and this needs to be done using the Save() function.
 */
-func New(profileName string, credentialFactory *factory.Factory) (*Profile, error) {
+func New(profileName string, sourceFactory *factory.Factory) (*Profile, error) {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 	if !keyRegex.MatchString(profileName) {
+		sourceFactory.Log.Error().Msg(ERR_PROFILE_NAME_MUST_MATCH_REGEX)
 		return nil, errors.New(ERR_PROFILE_NAME_MUST_MATCH_REGEX)
 	}
 
 	newProfile := Profile{
 		Name:               profileName,
-		ConfigFileLocation: credentialFactory.ConfigDirectory + profileName,
+		ConfigFileLocation: sourceFactory.ConfigDirectory + profileName,
 		attributes:         make(map[string]map[string]string),
 		Initialized:        true,
-		Factory:            credentialFactory,
+		Factory:            sourceFactory,
 	}
 
 	return &newProfile, nil
@@ -112,6 +113,7 @@ func (thisProfile *Profile) GetAllSectionAttributes(sectionName string) (map[str
 	if _, ok := thisProfile.attributes[sectionName]; ok {
 		return thisProfile.attributes[sectionName], nil
 	} else {
+		thisProfile.Factory.Log.Error().Msg(ERR_SECTION_NOT_EXIST)
 		return nil, errors.New(ERR_SECTION_NOT_EXIST)
 	}
 }
@@ -122,9 +124,11 @@ attribute may still exist on the file system.
 */
 func (thisProfile *Profile) DeleteAttribute(sectionName string, key string) error {
 	if len(thisProfile.GetAttribute(sectionName, key)) == 0 {
+		thisProfile.Factory.Log.Error().Msg(ERR_DELETED_ATTRIBUTE_NOT_EXIST)
 		return errors.New(ERR_DELETED_ATTRIBUTE_NOT_EXIST)
 	}
 
+	thisProfile.Factory.Log.Trace().Str("key", key).Msg("Deleting attribute.")
 	delete(thisProfile.attributes[sectionName], key)
 	return nil
 }

@@ -7,12 +7,10 @@ import (
 	"github.com/engi-fyi/go-credentials/serializer"
 	"os"
 	"testing"
-
-	"github.com/rs/zerolog/log"
 )
 
 func TestCredentialNew(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	// Test basic info.
 
@@ -47,7 +45,7 @@ func TestCredentialNew(t *testing.T) {
 }
 
 func TestCredentialAttributes(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	// Test basic info.
 	factory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
@@ -100,7 +98,7 @@ func TestCredentialAttributes(t *testing.T) {
 }
 
 func TestCredentialSave(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	// Reinitialise everything
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
@@ -118,7 +116,7 @@ func TestCredentialSave(t *testing.T) {
 }
 
 func TestCredentialInterferedWithSave(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	// Testing a factory that has been messed with
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
@@ -132,7 +130,7 @@ func TestCredentialInterferedWithSave(t *testing.T) {
 }
 
 func TestCredentialSaveProfileNotInitialized(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	// Reinitialise everything
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
@@ -149,7 +147,7 @@ func TestCredentialSaveProfileNotInitialized(t *testing.T) {
 }
 
 func TestCredentialSaveFactoryInconsistent(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	// Reinitialise everything
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
@@ -166,7 +164,7 @@ func TestCredentialSaveFactoryInconsistent(t *testing.T) {
 }
 
 func TestCredentialProfileNotInitialized(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	// Reinitialise everything
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
@@ -183,7 +181,7 @@ func TestCredentialProfileNotInitialized(t *testing.T) {
 }
 
 func TestCredentialLoadFromIni(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
@@ -235,7 +233,7 @@ func TestCredentialLoadFromIni(t *testing.T) {
 }
 
 func TestCredentialLoadFactoryNotInitialized(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
@@ -245,7 +243,7 @@ func TestCredentialLoadFactoryNotInitialized(t *testing.T) {
 }
 
 func TestCredentialLoadNoIniFile(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
@@ -255,7 +253,7 @@ func TestCredentialLoadNoIniFile(t *testing.T) {
 }
 
 func TestCredentialLoadProfileNotInitialized(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	testFactory := &factory.Factory{}
 	_, loadErr := Load(testFactory)
@@ -263,7 +261,7 @@ func TestCredentialLoadProfileNotInitialized(t *testing.T) {
 }
 
 func TestCredentialLoad(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
@@ -310,7 +308,7 @@ func TestCredentialLoad(t *testing.T) {
 }
 
 func TestCredentialSaveEnv(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
 	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
 	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
@@ -344,7 +342,7 @@ func TestCredentialSaveEnv(t *testing.T) {
 }
 
 func TestCredentialProfiles(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 
 	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
@@ -397,7 +395,7 @@ func TestCredentialProfiles(t *testing.T) {
 }
 
 func TestProfile(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	_, credentialErr := NewProfile("", testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)

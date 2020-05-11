@@ -7,6 +7,8 @@ As this project is actively under beta development, only the latest release is s
 | Version | Supported          |
 | ------- | ------------------ |
 | latest  | :white_check_mark: |
+| 1.1.0   | :white_check_mark: |
+| 1.0.0   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 

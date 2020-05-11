@@ -2,14 +2,13 @@ package factory
 
 import (
 	"github.com/engi-fyi/go-credentials/global"
-	"github.com/rs/zerolog/log"
 	"os"
 	"strings"
 	"testing"
 )
 
 func TestFactoryNew(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	_, factoryErr := New("", false)
 	assert.EqualError(factoryErr, ERR_APPLICATION_NAME_BLANK)
 	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
@@ -21,7 +20,7 @@ func TestFactoryNew(t *testing.T) {
 }
 
 func TestFactoryInitialize(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 
 	log.Info().Msg("Testing to make sure a blank application name cannot be passed.")
 	testFactory, blankErr := New("", false)
@@ -44,7 +43,7 @@ func TestFactoryInitialize(t *testing.T) {
 }
 
 func TestSetOutputType(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
@@ -63,7 +62,7 @@ func TestSetOutputType(t *testing.T) {
 }
 
 func TestSetEnvironmentKeys(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
 	assert.NoError(factoryErr)
@@ -90,7 +89,7 @@ func TestSetEnvironmentKeys(t *testing.T) {
 }
 
 func TestFactoryAlternates(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
 	newFactory.Initialize()
 	assert.NoError(factoryErr)
@@ -106,6 +105,34 @@ func TestFactoryAlternates(t *testing.T) {
 	newFactory.SetAlternatePassword(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
 	assert.Equal(strings.ToLower(global.TEST_VAR_USERNAME_ALTERNATE_LABEL), newFactory.GetAlternateUsername())
 	assert.Equal(strings.ToLower(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL), newFactory.GetAlternatePassword())
+}
+
+func TestFactoryLogging(t *testing.T) {
+	assert, _ := global.InitTest(t)
+	os.Unsetenv(global.LOG_LEVEL_ENVIRONMENT_KEY)
+	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
+	os.Setenv(global.LOG_LEVEL_ENVIRONMENT_KEY, "trace")
+	assert.NoError(factoryErr)
+	assert.Equal("", newFactory.Log.GetLevel().String())
+
+	newFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME, false)
+	os.Unsetenv(global.LOG_LEVEL_ENVIRONMENT_KEY)
+	assert.NoError(factoryErr)
+	assert.Equal("trace", newFactory.Log.GetLevel().String())
+
+	testLogLevels := []string{
+		"panic", "fatal", "error", "warn", "info", "debug", "trace",
+	}
+
+	for i := range testLogLevels {
+		newFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME, false)
+		assert.NoError(factoryErr)
+		newFactory.ModifyLogger(testLogLevels[i], true)
+		assert.Equal(testLogLevels[i], newFactory.Log.GetLevel().String())
+	}
+
+	// Setting this again so that the test logging can continue on correctly.
+	os.Setenv(global.LOG_LEVEL_ENVIRONMENT_KEY, "trace")
 }
 
 func testGetParentDirectory(applicationName string) string {

@@ -8,7 +8,7 @@ import (
 )
 
 func TestToIni(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	testFactory, testSerializer, serializeErr := createTestIni(global.DEFAULT_PROFILE_NAME, false)
 	assert.NoError(serializeErr)
 
@@ -23,7 +23,7 @@ func TestToIni(t *testing.T) {
 }
 
 func TestFromIni(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	testFactory, _, serializeErr := createTestIni(global.DEFAULT_PROFILE_NAME, false)
 	assert.NoError(serializeErr)
 

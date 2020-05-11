@@ -3,7 +3,6 @@ package serializer
 import (
 	"errors"
 	"github.com/engi-fyi/go-credentials/global"
-	"github.com/rs/zerolog/log"
 	"os"
 	"strings"
 )
@@ -22,7 +21,7 @@ Profile attributes are also added to the profile in the following format:
 SECTION_NAME can be blank.
 */
 func (thisSerializer *Serializer) ToEnv(username string, password string, attributes map[string]map[string]string) error {
-	log.Trace().Msg("Serializing credential and profile to environment.")
+	thisSerializer.Factory.Log.Trace().Msg("Serializing credential and profile to environment.")
 	credentialErr := thisSerializer.saveCredentialEnv(username, password)
 
 	if credentialErr != nil {
@@ -42,26 +41,26 @@ func (thisSerializer *Serializer) saveCredentialEnv(username string, password st
 	prefix := thisSerializer.getEnvPrefix()
 
 	usernameKey := strings.ToUpper(prefix + thisSerializer.Factory.GetAlternateUsername())
-	log.Trace().Str("key", usernameKey).Msg("Setting username environment variable.")
+	thisSerializer.Factory.Log.Trace().Str("key", usernameKey).Msg("Setting username environment variable.")
 	setErr := os.Setenv(usernameKey, username)
 
 	if setErr != nil {
-		log.Error().Err(setErr).Msg("Error setting username in environment.")
+		thisSerializer.Factory.Log.Error().Err(setErr).Msg("Error setting username in environment.")
 		return setErr
 	}
 
-	log.Trace().Msg("Username set.")
+	thisSerializer.Factory.Log.Trace().Msg("Username set.")
 
 	passwordKey := strings.ToUpper(prefix + thisSerializer.Factory.GetAlternatePassword())
-	log.Trace().Str("key", passwordKey).Msg("Setting password environment variable.")
+	thisSerializer.Factory.Log.Trace().Str("key", passwordKey).Msg("Setting password environment variable.")
 	setErr = os.Setenv(passwordKey, password)
 
 	if setErr != nil {
-		log.Error().Err(setErr).Msg("Error setting password in environment.")
+		thisSerializer.Factory.Log.Error().Err(setErr).Msg("Error setting password in environment.")
 		return setErr
 	}
 
-	log.Trace().Msg("Password set.")
+	thisSerializer.Factory.Log.Trace().Msg("Password set.")
 
 	return nil
 }
@@ -72,7 +71,7 @@ func (thisSerializer *Serializer) saveProfileEnv(attributes map[string]map[strin
 	for key, value := range attributes {
 		for subKey, subValue := range value {
 			fullKey := prefix + "ATTRIBUTE::" + strings.ToUpper(key) + "::" + strings.ToUpper(subKey)
-			log.Trace().Str("key", fullKey).Msg("Setting attribute environment variable.")
+			thisSerializer.Factory.Log.Trace().Str("key", fullKey).Msg("Setting attribute environment variable.")
 			setErr := os.Setenv(fullKey, subValue)
 
 			if setErr != nil {
@@ -121,13 +120,13 @@ func (thisSerializer *Serializer) loadCredentialEnv(parsedVariables map[string]s
 		return "", "", errors.New(ERR_REQUIRED_VARIABLE_USERNAME_NOT_FOUND)
 	}
 
-	log.Trace().Str("username_label", thisSerializer.Factory.GetAlternateUsername()).Msg("Found username label.")
+	thisSerializer.Factory.Log.Trace().Str("username_label", thisSerializer.Factory.GetAlternateUsername()).Msg("Found username label.")
 
 	if _, exists := parsedVariables[thisSerializer.Factory.GetAlternatePassword()]; !exists {
 		return "", "", errors.New(ERR_REQUIRED_VARIABLE_PASSWORD_NOT_FOUND)
 	}
 
-	log.Trace().Str("password_label", thisSerializer.Factory.GetAlternatePassword()).Msg("Found password label.")
+	thisSerializer.Factory.Log.Trace().Str("password_label", thisSerializer.Factory.GetAlternatePassword()).Msg("Found password label.")
 
 	return parsedVariables[thisSerializer.Factory.GetAlternateUsername()],
 		parsedVariables[thisSerializer.Factory.GetAlternatePassword()],

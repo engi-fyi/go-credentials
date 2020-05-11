@@ -1,7 +1,6 @@
 package serializer
 
 import (
-	"github.com/rs/zerolog/log"
 	"gopkg.in/ini.v1"
 	"os"
 )
@@ -12,7 +11,7 @@ translatable to sections in the Profile. Username and Password will have an appr
 alternate set in the Credential's related Factory.
 */
 func (thisSerializer *Serializer) ToIni(username string, password string, attributes map[string]map[string]string) error {
-	log.Trace().Msg("Serializing credential and profile to ini file.")
+	thisSerializer.Factory.Log.Trace().Msg("Serializing credential and profile to ini file.")
 	credentialErr := thisSerializer.saveCredentialIni(username, password)
 
 	if credentialErr != nil {
@@ -29,9 +28,9 @@ func (thisSerializer *Serializer) ToIni(username string, password string, attrib
 }
 
 func (thisSerializer *Serializer) saveCredentialIni(username string, password string) error {
-	log.Trace().Msg("Serializing credential to ini file.")
+	thisSerializer.Factory.Log.Trace().Msg("Serializing credential to ini file.")
 	credentialIni, credIniError := initIni(thisSerializer.CredentialFile)
-	log.Trace().Msg("Getting alternate username and password labels.")
+	thisSerializer.Factory.Log.Trace().Msg("Getting alternate username and password labels.")
 	usernameKey := thisSerializer.Factory.GetAlternateUsername()
 	passwordKey := thisSerializer.Factory.GetAlternatePassword()
 
@@ -39,29 +38,29 @@ func (thisSerializer *Serializer) saveCredentialIni(username string, password st
 		return credIniError
 	}
 
-	log.Trace().Msg("Adding username and password to credentials file.")
+	thisSerializer.Factory.Log.Trace().Msg("Adding username and password to credentials file.")
 	credentialIni.Section(thisSerializer.ProfileName).Key(usernameKey).SetValue(username)
 	credentialIni.Section(thisSerializer.ProfileName).Key(passwordKey).SetValue(password)
 
-	log.Trace().Msg("Saving credential ini file.")
+	thisSerializer.Factory.Log.Trace().Msg("Saving credential ini file.")
 	saveErr := credentialIni.SaveTo(thisSerializer.CredentialFile)
 
 	if saveErr != nil {
-		log.Error().Str("file", thisSerializer.CredentialFile).Err(saveErr).Msg("Error saving ini file.")
+		thisSerializer.Factory.Log.Error().Str("file", thisSerializer.CredentialFile).Err(saveErr).Msg("Error saving ini file.")
 		return saveErr
 	}
 
-	log.Trace().Msg("Credential ini file saved successfully.")
+	thisSerializer.Factory.Log.Trace().Msg("Credential ini file saved successfully.")
 	return nil
 }
 
 func (thisSerializer *Serializer) saveProfileIni(attributes map[string]map[string]string) error {
-	log.Trace().Msg("Serializing profile to ini file.")
+	thisSerializer.Factory.Log.Trace().Msg("Serializing profile to ini file.")
 	profileIni := ini.Empty()
 
-	log.Trace().Msg("Processing attributes.")
+	thisSerializer.Factory.Log.Trace().Msg("Processing attributes.")
 	for key, value := range attributes {
-		log.Trace().Str("attribute", key).Msg("Adding section.")
+		thisSerializer.Factory.Log.Trace().Str("attribute", key).Msg("Adding section.")
 		mySection, sectionErr := profileIni.NewSection(key)
 
 		if sectionErr != nil {
@@ -69,7 +68,7 @@ func (thisSerializer *Serializer) saveProfileIni(attributes map[string]map[strin
 		}
 
 		for subKey, subValue := range value {
-			log.Trace().Str("attribute", subKey).Msg("Adding attribute.")
+			thisSerializer.Factory.Log.Trace().Str("attribute", subKey).Msg("Adding attribute.")
 			_, keyErr := mySection.NewKey(subKey, subValue)
 
 			if keyErr != nil {
@@ -78,14 +77,14 @@ func (thisSerializer *Serializer) saveProfileIni(attributes map[string]map[strin
 		}
 	}
 
-	log.Trace().Msg("Saving profile ini file.")
+	thisSerializer.Factory.Log.Trace().Msg("Saving profile ini file.")
 	saveErr := profileIni.SaveTo(thisSerializer.ConfigFile)
 
 	if saveErr != nil {
 		return saveErr
 	}
 
-	log.Trace().Msg("Profile ini file saved successfully.")
+	thisSerializer.Factory.Log.Trace().Msg("Profile ini file saved successfully.")
 	return nil
 }
 
@@ -94,7 +93,6 @@ func initIni(fileName string) (*ini.File, error) {
 		emptyFile, emptyErr := os.Create(fileName)
 
 		if emptyErr != nil {
-			log.Error().Str("file", fileName).Err(emptyErr).Msg("Error creating file.")
 			return nil, emptyErr
 		}
 
