@@ -33,6 +33,8 @@ func (thisSerializer *Serializer) Serialize(username string, password string, at
 		return thisSerializer.ToIni(username, password, attributes)
 	} else if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_ENV {
 		return thisSerializer.ToEnv(username, password, attributes)
+	} else if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_JSON {
+		return thisSerializer.ToJson(username, password, attributes)
 	} else {
 		return errors.New(ERR_UNRECOGNIZED_OUTPUT_TYPE)
 	}
@@ -49,6 +51,8 @@ func (thisSerializer *Serializer) Deserialize() (string, string, map[string]map[
 		return thisSerializer.FromIni()
 	} else if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_ENV {
 		return thisSerializer.FromEnv()
+	} else if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_JSON {
+		return thisSerializer.FromJson()
 	} else {
 		return "", "", make(map[string]map[string]string), errors.New(ERR_UNRECOGNIZED_OUTPUT_TYPE)
 	}

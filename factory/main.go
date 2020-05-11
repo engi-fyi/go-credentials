@@ -141,8 +141,6 @@ func (factory *Factory) GetAlternatePassword() string {
 
 // SetOutputType determines which of the supported file types Credentials should be serialized to file as. The currently
 // supported file types are ini with plans to implement json.
-//
-// TODO(7): Implement json format.
 func (factory *Factory) SetOutputType(outputType string) error {
 	if outputType == global.OUTPUT_TYPE_INI ||
 		outputType == global.OUTPUT_TYPE_JSON ||

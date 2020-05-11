@@ -11,7 +11,6 @@ import (
 /*
 Load uses LoadFromProfile to create a Credential set to the default profile.
 */
-// TODO(7): Implement json format.
 func Load(sourceFactory *factory.Factory) (*Credential, error) {
 	return LoadFromProfile(global.DEFAULT_PROFILE_NAME, sourceFactory)
 }

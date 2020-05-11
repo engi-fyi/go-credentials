@@ -23,10 +23,5 @@ type serializedCredentials struct {
 }
 
 type profileSerializer struct {
-	Attributes map[string][]serializedAttribute `json:"attributes",yaml:"attributes"`
-}
-
-type serializedAttribute struct {
-	Key   string `json:"key",yaml:"key"`
-	Value string `json:"value",yaml:"value"`
+	Attributes map[string]map[string]string `json:"attributes",yaml:"attributes"`
 }
