@@ -9,8 +9,8 @@ import (
 // exported by default. The attributes of the Credential are not exported, as they should only be accessed via
 // SetAttribute or GetAttribute.
 type Credential struct {
-	Username             string `json:"username"`
-	Password             string `json:"password"`
+	Username             string
+	Password             string
 	Initialized          bool
 	Factory              *factory.Factory
 	Profile              *profile.Profile
