@@ -30,8 +30,6 @@ func New(applicationName string, useEnvironment bool) (*Factory, error) {
 		OutputType:      global.OUTPUT_TYPE_INI,
 	}
 
-	newFactory.initLogger()
-
 	initErr := newFactory.Initialize()
 
 	if initErr != nil {
@@ -42,7 +40,7 @@ func New(applicationName string, useEnvironment bool) (*Factory, error) {
 }
 
 func (thisFactory *Factory) initLogger() {
-	logLevel := "info"
+	logLevel := "disabled"
 
 	if value, ok := os.LookupEnv(global.LOG_LEVEL_ENVIRONMENT_KEY); ok {
 		logLevel = value
@@ -54,20 +52,23 @@ func (thisFactory *Factory) initLogger() {
 		thisFactory.ModifyLogger(logLevel, false)
 	}
 }
-
+/*
+ModifyLogger is responsible for reconfiguring the log level and whether or not pretty output is used. Available log
+levels are panic, fatal, error, warn, info, debug, trace, and disabled. By default, all logging output is disabled.
+ */
 func (thisFactory *Factory) ModifyLogger(logLevel string, pretty bool) {
 	var logger zerolog.Logger
 
 	if pretty {
-		logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr}).Level(GetLogLevel(logLevel))
+		logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr}).Level(getLogLevel(logLevel))
 	} else {
-		logger = zerolog.New(os.Stderr).With().Timestamp().Logger().Level(GetLogLevel(logLevel))
+		logger = zerolog.New(os.Stderr).With().Timestamp().Logger().Level(getLogLevel(logLevel))
 	}
 
 	thisFactory.Log = &logger
 }
 
-func GetLogLevel(logLevel string) zerolog.Level {
+func getLogLevel(logLevel string) zerolog.Level {
 	switch logLevel {
 	case "panic":
 		return zerolog.PanicLevel
@@ -90,16 +91,13 @@ func GetLogLevel(logLevel string) zerolog.Level {
 	}
 }
 
-func (thisFactory *Factory) DisableLogging() {
-	thisFactory.Log.Level(zerolog.Disabled)
-}
-
 /*
 Initialize sets computed properties a Factory object. Specifically, it sets the value of ParentDirectory, ConfigDirectory and
 CredentialFile. If ParentDirectory does not exist, it will also create it. Alternates is also initialized as
-an empty map and the Initialized flag is set to true.
+an empty map and the Initialized flag is set to true. The logger for the Factory is also initialized here.
 */
 func (thisFactory *Factory) Initialize() error {
+	thisFactory.initLogger()
 	thisFactory.Log.Trace().Msg("Initializing application credentials.")
 	thisFactory.Log.Trace().Msg("Retrieving user home directory.")
 	homeDirectory, hdErr := os.UserHomeDir()

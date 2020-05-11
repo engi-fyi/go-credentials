@@ -3,38 +3,56 @@ Welcome to `go-credentials`! This project was built out of a need for a library 
 ## Getting Started
 The basic API of `go-credentials` is based on two separate object types. `Factory` is responsible for setting application-level settings. `Credential` is for managing your users credentials.
 
-To get started, is all you need to do is the following in your shell:
+To get started, is all you need to do is create the following file at __~/.gcea/credentials__.
 ```
-export TEST_APP_USERNAME="my.username"
-export TEST_APP_PASSWORD="Password1!"
-export TEST_APP_ATTRIBUTE="an attribute with a value"
+[default]
+username = test@engi.fyi
+password = !my_test_pass==word
 ```
 Then, create a simple Go project, and enter in your `go-credentials` config:
-```
+To get started, is all you need to do is create the following files.
+```go
 package main
 
 import (
     "github.com/engi-fyi/go-credentials/credential"
     "github.com/engi-fyi/go-credentials/factory"
+    "fmt" 
+    "time"
 )
 
 func main() {
-    myFact, _ := factory.New("test_app", false)
-    myFact.Initialize()
-    myCred, _ := credential.LoadFromEnvironment(myFact)
-    print(myCred.Username)                  // "my.username"
-    print(myCred.Password)                  // "Password1!"
-    print(myCred.GetAttribute("attribute")) // "an attribute with a value"
-    myCred.Save()                           // credentials file created at
-                                            // ~/.test_app/credentials
+	myFact, _ := factory.New("gcea", false) // go-credentials-example-application
+	myFact.ModifyLogger("trace", true) // let's see under the hood and make it pretty.
+	myCredential, _ := credential.Load(myFact)
+
+	fmt.Printf("Username: %s\n", myCredential.Username)
+	fmt.Printf("Password: %s\n\n", myCredential.Password)
+
+	myCredential.SetSectionAttribute("metadata", "last_updated", time.Now().Format("02/01/2006 15:04:05"))
+	myCredential.Save()
+	myCredential = nil
+
+	yourCredential, _ := credential.Load(myFact)
+
+	fmt.Printf("Username: %s\n", yourCredential.Username)
+	fmt.Printf("Password: %s\n", yourCredential.Password)
+
+	lastUpdated, _ := yourCredential.GetSectionAttribute("metadata", "last_updated")
+	fmt.Printf("Last Updated: %s\n", lastUpdated)
 }
+```
+
+Then, install the dependancies and run the project!
+```
+user@console:~/$ go get -d .
+user@console:~/$ go run main.go
 ```
 ## Basic API Overview
 The following section gives a very basic overview of the `go-credentials` API. To view the full details, please visit out Go Doc page.
 ### Factory
 
 - `New`: creates a new Factory object.
-- `Initialize`: sets all of the computed properties of that Factory object.
 - `SetOutputType`: sets the output type. Currently available types are `ini` with plans to implement `json`.
 
 ### Credential
