@@ -113,7 +113,7 @@ func TestFactoryLogging(t *testing.T) {
 	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
 	os.Setenv(global.LOG_LEVEL_ENVIRONMENT_KEY, "trace")
 	assert.NoError(factoryErr)
-	assert.Equal("info", newFactory.Log.GetLevel().String())
+	assert.Equal("", newFactory.Log.GetLevel().String())
 
 	newFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME, false)
 	os.Unsetenv(global.LOG_LEVEL_ENVIRONMENT_KEY)
