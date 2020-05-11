@@ -3,7 +3,6 @@ package serializer
 import (
 	"encoding/json"
 	"github.com/engi-fyi/go-credentials/global"
-	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 )
@@ -14,7 +13,7 @@ translatable to parent keys in the config file. Username and Password will have 
 or an alternate set in the Credential's related Factory.
 */
 func (thisSerializer *Serializer) ToJson(username string, password string, attributes map[string]map[string]string) error {
-	log.Trace().Msg("Serializing credential and profile to json file.")
+	thisSerializer.Factory.Log.Trace().Msg("Serializing credential and profile to json file.")
 	credentialErr := thisSerializer.saveCredentialJson(username, password)
 
 	if credentialErr != nil {
@@ -31,7 +30,7 @@ func (thisSerializer *Serializer) ToJson(username string, password string, attri
 }
 
 func (thisSerializer *Serializer) saveCredentialJson(username string, password string) error {
-	log.Trace().Msg("Serializing credential to json file.")
+	thisSerializer.Factory.Log.Trace().Msg("Serializing credential to json file.")
 	existingCredential, initErr := initJsonCredential(thisSerializer.CredentialFile)
 
 	if initErr != nil {
@@ -55,12 +54,12 @@ func (thisSerializer *Serializer) saveCredentialJson(username string, password s
 		return writeErr
 	}
 
-	log.Trace().Msg("Credential json file saved successfully.")
+	thisSerializer.Factory.Log.Trace().Msg("Credential json file saved successfully.")
 	return nil
 }
 
 func (thisSerializer *Serializer) saveProfileJson(attributes map[string]map[string]string) error {
-	log.Trace().Msg("Serializing profile to json file.")
+	thisSerializer.Factory.Log.Trace().Msg("Serializing profile to json file.")
 	existingProfile, initErr := initJsonProfile(thisSerializer.CredentialFile)
 
 	if initErr != nil {
@@ -80,7 +79,7 @@ func (thisSerializer *Serializer) saveProfileJson(attributes map[string]map[stri
 		return writeErr
 	}
 
-	log.Trace().Msg("Profile json file saved successfully.")
+	thisSerializer.Factory.Log.Trace().Msg("Profile json file saved successfully.")
 	return nil
 }
 
@@ -89,7 +88,6 @@ func initJson(fileName string) ([]byte, error) {
 		emptyFile, emptyErr := os.Create(fileName)
 
 		if emptyErr != nil {
-			log.Error().Str("file", fileName).Err(emptyErr).Msg("Error creating file.")
 			return []byte{}, emptyErr
 		}
 

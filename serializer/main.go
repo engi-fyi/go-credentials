@@ -9,12 +9,12 @@ import (
 /*
 New returns a Serializer object with all the defaults required to de(serialize) objects based on the Factory settings.
 */
-func New(myFactory *factory.Factory, profileName string) *Serializer {
+func New(sourceFactory *factory.Factory, profileName string) *Serializer {
 	return &Serializer{
-		Factory:        myFactory,
+		Factory:        sourceFactory,
 		ProfileName:    profileName,
-		CredentialFile: myFactory.CredentialFile,
-		ConfigFile:     myFactory.ConfigDirectory + profileName,
+		CredentialFile: sourceFactory.CredentialFile,
+		ConfigFile:     sourceFactory.ConfigDirectory + profileName,
 		Initialized:    true,
 	}
 }
@@ -29,6 +29,8 @@ The one exception to these rules is Environment, which doesn't save settings to 
 sessions.
 */
 func (thisSerializer *Serializer) Serialize(username string, password string, attributes map[string]map[string]string) error {
+	thisSerializer.Factory.Log.Trace().Str("output_type", thisSerializer.Factory.OutputType).Msg("Serializing credential and profile.")
+
 	if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_INI {
 		return thisSerializer.ToIni(username, password, attributes)
 	} else if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_ENV {
@@ -36,6 +38,7 @@ func (thisSerializer *Serializer) Serialize(username string, password string, at
 	} else if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_JSON {
 		return thisSerializer.ToJson(username, password, attributes)
 	} else {
+		thisSerializer.Factory.Log.Error().Str("unrecognized", thisSerializer.Factory.OutputType).Msg(ERR_UNRECOGNIZED_OUTPUT_TYPE)
 		return errors.New(ERR_UNRECOGNIZED_OUTPUT_TYPE)
 	}
 }
@@ -47,6 +50,8 @@ value of thisSerializer.Factory.OutputType.
 For the format expected of each file, please see the appropriate From<Type> function.
 */
 func (thisSerializer *Serializer) Deserialize() (string, string, map[string]map[string]string, error) {
+	thisSerializer.Factory.Log.Trace().Str("output_type", thisSerializer.Factory.OutputType).Msg("Deserializing credential and profile.")
+
 	if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_INI {
 		return thisSerializer.FromIni()
 	} else if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_ENV {
@@ -54,6 +59,7 @@ func (thisSerializer *Serializer) Deserialize() (string, string, map[string]map[
 	} else if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_JSON {
 		return thisSerializer.FromJson()
 	} else {
+		thisSerializer.Factory.Log.Error().Str("unrecognized", thisSerializer.Factory.OutputType).Msg(ERR_UNRECOGNIZED_OUTPUT_TYPE)
 		return "", "", make(map[string]map[string]string), errors.New(ERR_UNRECOGNIZED_OUTPUT_TYPE)
 	}
 }

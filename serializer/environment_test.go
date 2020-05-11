@@ -3,13 +3,12 @@ package serializer
 import (
 	"github.com/engi-fyi/go-credentials/factory"
 	"github.com/engi-fyi/go-credentials/global"
-	"github.com/rs/zerolog/log"
 	"os"
 	"testing"
 )
 
 func TestToEnv(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 
 	_, _, serializeErr := createTestEnv(global.DEFAULT_PROFILE_NAME, false)
 	assert.NoError(serializeErr)
@@ -32,7 +31,7 @@ func TestToEnv(t *testing.T) {
 }
 
 func TestFromEnv(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	_, testSerializer, serializeErr := createTestEnv(global.DEFAULT_PROFILE_NAME, false)
 	assert.NoError(serializeErr)
 
@@ -48,7 +47,7 @@ func TestFromEnv(t *testing.T) {
 }
 
 func TestParseEnvironmentVariable(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, log := global.InitTest(t)
 	log.Info().Msg("Testing environment parsing.")
 	assert.True(true)
 

@@ -10,7 +10,7 @@ import (
 )
 
 func TestToJson(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	testFactory, testSerializer, serializeErr := createTestJson(global.DEFAULT_PROFILE_NAME, false)
 
 	assert.NoError(serializeErr)
@@ -30,7 +30,7 @@ func TestToJson(t *testing.T) {
 }
 
 func TestFromJson(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	testFactory, testSerializer, serializeErr := createTestJson(global.DEFAULT_PROFILE_NAME, false)
 
 	assert.NoError(serializeErr)

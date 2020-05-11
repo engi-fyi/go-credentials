@@ -7,7 +7,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	testSerializer := New(testFactory, global.DEFAULT_PROFILE_NAME)
 	assert.Equal(testFactory.CredentialFile, testSerializer.CredentialFile)
@@ -18,7 +18,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestSerialize(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
 	testSerializer := New(testFactory, global.DEFAULT_PROFILE_NAME)
@@ -27,7 +27,7 @@ func TestSerialize(t *testing.T) {
 }
 
 func TestDeserialize(t *testing.T) {
-	assert := global.InitTest(t)
+	assert, _ := global.InitTest(t)
 	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
 	testSerializer := New(testFactory, global.DEFAULT_PROFILE_NAME)

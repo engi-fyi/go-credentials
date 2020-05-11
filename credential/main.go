@@ -8,7 +8,6 @@ import (
 	"github.com/engi-fyi/go-credentials/factory"
 	"github.com/engi-fyi/go-credentials/global"
 	"github.com/engi-fyi/go-credentials/profile"
-	"github.com/rs/zerolog/log"
 )
 
 /*
@@ -16,26 +15,28 @@ New creates a new Credential instance. credentialFactory provides global applica
 go-credential library. username and password are the user's base credentials. No other attributes are set during
 the initial creation of a Credential object, and these are stored in the Profile.
 */
-func New(credentialFactory *factory.Factory, username string, password string) (*Credential, error) {
-	return NewProfile(global.DEFAULT_PROFILE_NAME, credentialFactory, username, password)
+
+func New(sourceFactory *factory.Factory, username string, password string) (*Credential, error) {
+	return NewProfile(global.DEFAULT_PROFILE_NAME, sourceFactory, username, password)
 }
 
-func NewProfile(profileName string, credentialFactory *factory.Factory, username string, password string) (*Credential, error) {
-	log.Trace().Msg("Building credential object.")
-
-	if credentialFactory == nil {
+func NewProfile(profileName string, sourceFactory *factory.Factory, username string, password string) (*Credential, error) {
+	if sourceFactory == nil {
 		return nil, errors.New(ERR_FACTORY_MUST_BE_INITIALIZED)
 	} else {
-		if !credentialFactory.Initialized {
+		if !sourceFactory.Initialized {
 			return nil, errors.New(ERR_FACTORY_MUST_BE_INITIALIZED)
 		}
 	}
+
+	sourceFactory.Log.Trace().Str("profile", profileName).Msg("Loading credentials from default profile")
+	sourceFactory.Log.Trace().Msg("Building credential object.")
 
 	if username == "" || password == "" {
 		return nil, errors.New(ERR_USERNAME_OR_PASSWORD_NOT_SET)
 	}
 
-	newProfile, profileErr := profile.New(profileName, credentialFactory)
+	newProfile, profileErr := profile.New(profileName, sourceFactory)
 
 	if profileErr != nil {
 		return nil, profileErr
@@ -45,7 +46,7 @@ func NewProfile(profileName string, credentialFactory *factory.Factory, username
 		Username:    username,
 		Password:    password,
 		Initialized: true,
-		Factory:     credentialFactory,
+		Factory:     sourceFactory,
 		Profile:     newProfile,
 	}
 
@@ -60,23 +61,25 @@ passed as the attribute key, the set is redirected to the Username or Password p
 */
 func (thisCredential *Credential) SetAttribute(key string, value string) error {
 	if strings.ToLower(key) == global.USERNAME_LABEL {
-		log.Trace().Msg("Redirected attribute request to set username.")
+		thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to set username.")
 		thisCredential.Username = value
 	} else if strings.ToLower(key) == global.PASSWORD_LABEL {
-		log.Trace().Msg("Redirected attribute request to set password.")
+		thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to set password.")
 		thisCredential.Password = value
 	} else {
 		keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 		if keyRegex.MatchString(key) {
-			log.Trace().Str("key", key).Msg("Setting attribute.")
+			thisCredential.Factory.Log.Trace().Str("key", key).Msg("Setting attribute.")
 
 			attributeErr := thisCredential.Profile.SetAttribute(global.NO_SECTION_KEY, key, value)
 
 			if attributeErr != nil {
+				thisCredential.Factory.Log.Error().Err(attributeErr).Str("key", key).Msg("Error setting attribute.")
 				return attributeErr
 			}
 		} else {
+			thisCredential.Factory.Log.Error().Msg(ERR_KEY_MUST_MATCH_REGEX)
 			return errors.New(ERR_KEY_MUST_MATCH_REGEX)
 		}
 	}
@@ -98,14 +101,16 @@ func (thisCredential *Credential) SetSectionAttribute(section string, key string
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 	if keyRegex.MatchString(key) {
-		log.Trace().Str("key", key).Msg("Setting attribute.")
+		thisCredential.Factory.Log.Trace().Str("key", key).Msg("Setting attribute.")
 
 		attributeErr := thisCredential.Profile.SetAttribute(section, key, value)
 
 		if attributeErr != nil {
+			thisCredential.Factory.Log.Error().Err(attributeErr).Str("key", section + "\\" + key).Msg("Error setting attribute.")
 			return attributeErr
 		}
 	} else {
+		thisCredential.Factory.Log.Error().Msg(ERR_KEY_MUST_MATCH_REGEX)
 		return errors.New(ERR_KEY_MUST_MATCH_REGEX)
 	}
 
@@ -118,19 +123,19 @@ is passed in, and if the key does not have a value stored in the Profile, an err
 */
 func (thisCredential *Credential) GetAttribute(key string) (string, error) {
 	if strings.ToLower(key) == global.USERNAME_LABEL {
-		log.Trace().Msg("Redirected attribute request to value of username.")
+		thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to value of username.")
 		return thisCredential.Username, nil
 	} else if strings.ToLower(key) == global.PASSWORD_LABEL {
-		log.Trace().Msg("Redirected attribute request to value of password.")
+		thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to value of password.")
 		return thisCredential.Password, nil
 	} else {
-		log.Trace().Str("Attribute", key).Msg("Retrieving attribute.")
+		thisCredential.Factory.Log.Trace().Str("key", key).Msg("Retrieving attribute.")
 		value := thisCredential.Profile.GetAttribute(global.NO_SECTION_KEY, key)
 
 		if len(value) > 0 {
 			return value, nil
 		} else {
-			log.Trace().Str("Attribute", key).Msg("That attribute doesn't exist.")
+			thisCredential.Factory.Log.Trace().Str("key", key).Msg("That attribute doesn't exist.")
 			return "", errors.New(ERR_ATTRIBUTE_NOT_EXIST)
 		}
 	}
@@ -142,13 +147,13 @@ and the Profile will redirect the output to the default section. The key is mand
 value stored in the Profile, an error is returned.
 */
 func (thisCredential *Credential) GetSectionAttribute(section string, key string) (string, error) {
-	log.Trace().Str("Attribute", key).Msg("Retrieving attribute.")
+	thisCredential.Factory.Log.Trace().Str("key", key).Msg("Retrieving attribute.")
 	value := thisCredential.Profile.GetAttribute(section, key)
 
 	if len(value) > 0 {
 		return value, nil
 	} else {
-		log.Trace().Str("Attribute", key).Msg("That attribute doesn't exist.")
+		thisCredential.Factory.Log.Trace().Str("key", key).Msg("That attribute doesn't exist.")
 		return "", errors.New(ERR_ATTRIBUTE_NOT_EXIST)
 	}
 }
