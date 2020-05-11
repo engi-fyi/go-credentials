@@ -10,7 +10,7 @@ import (
 ToIni is responsible for serializing a Credential and Profile to an ini file. Attribute sections are directly
 translatable to sections in the Profile. Username and Password will have an appropriate label (either the default or an
 alternate set in the Credential's related Factory.
- */
+*/
 func (thisSerializer *Serializer) ToIni(username string, password string, attributes map[string]map[string]string) error {
 	log.Trace().Msg("Serializing credential and profile to ini file.")
 	credentialErr := thisSerializer.saveCredentialIni(username, password)
@@ -113,7 +113,7 @@ FromIni is responsible for deserializing a Credential and Profile from an ini fi
 translatable to sections in the Profile. Alternate field labels are restored from the ini, so the same Factory
 object will need to be used when deserializing.
 */
-func (thisSerializer *Serializer) FromIni() (string, string, map[string]map[string]string, error)  {
+func (thisSerializer *Serializer) FromIni() (string, string, map[string]map[string]string, error) {
 	username, password, credentialErr := thisSerializer.loadCredentialIni()
 
 	if credentialErr != nil {

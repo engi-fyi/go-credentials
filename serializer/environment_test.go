@@ -75,7 +75,6 @@ func TestParseEnvironmentVariable(t *testing.T) {
 	assert.Equal(global.TEST_VAR_FIRST_SECTION_KEY, sectionName)
 	assert.True(didParse)
 
-
 	log.Info().Msg("Testing alternate username parsing.")
 	profileName, fieldName, _, didParse = testSerializer.ParseEnvironmentVariable(global.TEST_VAR_ENVIRONMENT_USERNAME_ALTERNATE_LABEL)
 	assert.Equal(global.DEFAULT_PROFILE_NAME, profileName)

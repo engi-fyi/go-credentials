@@ -46,7 +46,7 @@ func NewProfile(profileName string, credentialFactory *factory.Factory, username
 		Password:    password,
 		Initialized: true,
 		Factory:     credentialFactory,
-		Profile: 	 newProfile,
+		Profile:     newProfile,
 	}
 
 	return newCredential, nil
@@ -84,9 +84,6 @@ func (thisCredential *Credential) SetAttribute(key string, value string) error {
 	return nil
 }
 
-/*
-GetSectionAttribute retrieves an attribute that has been stored on the Credential's associated Profile.
-*/
 /*
 SetSectionAttribute sets an attribute on a Credential's associated Profile object. key must match the regex
 '(?m)^[0-9A-Za-z_]+$'. Section can be blank, and the Profile will redirect the output to the default section. The key is

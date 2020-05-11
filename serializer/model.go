@@ -4,13 +4,13 @@ import "github.com/engi-fyi/go-credentials/factory"
 
 /*
 Serializer represents the basic settings required to (de)serialize a Credential and Profile.
- */
+*/
 type Serializer struct {
 	Factory        *factory.Factory
 	ProfileName    string
 	CredentialFile string
 	ConfigFile     string
-	Initialized	   bool
+	Initialized    bool
 }
 
 type credentialSerializer struct {

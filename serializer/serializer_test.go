@@ -11,7 +11,7 @@ func TestNew(t *testing.T) {
 	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
 	testSerializer := New(testFactory, global.DEFAULT_PROFILE_NAME)
 	assert.Equal(testFactory.CredentialFile, testSerializer.CredentialFile)
-	assert.Equal(testFactory.ConfigDirectory + global.DEFAULT_PROFILE_NAME, testSerializer.ConfigFile)
+	assert.Equal(testFactory.ConfigDirectory+global.DEFAULT_PROFILE_NAME, testSerializer.ConfigFile)
 	assert.Equal(global.DEFAULT_PROFILE_NAME, testSerializer.ProfileName)
 	assert.True(testSerializer.Initialized)
 	assert.Equal(testFactory, testSerializer.Factory)

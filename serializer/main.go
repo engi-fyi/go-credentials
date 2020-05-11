@@ -8,14 +8,14 @@ import (
 
 /*
 New returns a Serializer object with all the defaults required to de(serialize) objects based on the Factory settings.
- */
+*/
 func New(myFactory *factory.Factory, profileName string) *Serializer {
 	return &Serializer{
 		Factory:        myFactory,
 		ProfileName:    profileName,
 		CredentialFile: myFactory.CredentialFile,
-		ConfigFile: 	myFactory.ConfigDirectory + profileName,
-		Initialized:	true,
+		ConfigFile:     myFactory.ConfigDirectory + profileName,
+		Initialized:    true,
 	}
 }
 

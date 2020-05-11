@@ -275,7 +275,6 @@ func TestCredentialLoad(t *testing.T) {
 	_, failLoadErr := Load(testFactory)
 	assert.Error(failLoadErr)
 
-
 	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
 	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
 	log.Info().Msg("Testing basic environment load.")
@@ -309,7 +308,6 @@ func TestCredentialLoad(t *testing.T) {
 
 	os.RemoveAll(testCredential.Factory.ParentDirectory)
 }
-
 
 func TestCredentialSaveEnv(t *testing.T) {
 	assert := global.InitTest(t)

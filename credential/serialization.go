@@ -29,7 +29,7 @@ func (thisCredential *Credential) Save() error {
 		return errors.New(profile.ERR_PROFILE_NOT_INITIALIZED)
 	}
 
-		mySerializer := serializer.New(thisCredential.Factory, thisCredential.Profile.Name)
+	mySerializer := serializer.New(thisCredential.Factory, thisCredential.Profile.Name)
 	return mySerializer.Serialize(thisCredential.Serialize())
 }
 

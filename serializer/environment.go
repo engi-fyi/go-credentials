@@ -94,7 +94,7 @@ environment variable managed by serializer is:
 Important to note is that if SECTION_NAME is blank then the default profile will be filled, and FIELD_TYPE can be one
 of three values which are USERNAME, PASSWORD, or ATTRIBUTE. If the FIELD_TYPE is ATTRIBUTE, then KEY_VALUE is mandatory.
 */
-func (thisSerializer *Serializer) FromEnv() (string, string, map[string]map[string]string, error)  {
+func (thisSerializer *Serializer) FromEnv() (string, string, map[string]map[string]string, error) {
 	parsedVariables, parseErr := thisSerializer.loadVariablesEnv()
 
 	if parseErr != nil {
@@ -130,8 +130,8 @@ func (thisSerializer *Serializer) loadCredentialEnv(parsedVariables map[string]s
 	log.Trace().Str("password_label", thisSerializer.Factory.GetAlternatePassword()).Msg("Found password label.")
 
 	return parsedVariables[thisSerializer.Factory.GetAlternateUsername()],
-	parsedVariables[thisSerializer.Factory.GetAlternatePassword()],
-	nil
+		parsedVariables[thisSerializer.Factory.GetAlternatePassword()],
+		nil
 }
 
 // currently only supports default profile, maybe change key name at some point in future
@@ -186,13 +186,13 @@ The format for an environment variable managed by serializer is:
 
 Important to note is that if SECTION_NAME is blank then the default profile will be filled, and FIELD_TYPE can be one
 of three values which are USERNAME, PASSWORD, or ATTRIBUTE. If the FIELD_TYPE is ATTRIBUTE, then KEY_VALUE is mandatory.
- */
+*/
 func (thisSerializer *Serializer) ParseEnvironmentVariable(environmentVariable string) (string, string, string, bool) {
 	if strings.Count(environmentVariable, "::") < 2 {
 		return "", "", "", false
 	}
 
-	if len(environmentVariable) < len(thisSerializer.Factory.ApplicationName + "::") {
+	if len(environmentVariable) < len(thisSerializer.Factory.ApplicationName+"::") {
 		return "", "", "", false
 	}
 
