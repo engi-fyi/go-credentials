@@ -6,8 +6,11 @@ import (
 	"os"
 )
 
-// BUG(4): Respect alternates when saving to file.
-// TODO(1000): Should we actually load an existing credential or would the user expect the whole state to be serialized?
+/*
+ToIni is responsible for serializing a Credential and Profile to an ini file. Attribute sections are directly
+translatable to sections in the Profile. Username and Password will have an appropriate label (either the default or an
+alternate set in the Credential's related Factory.
+ */
 func (thisSerializer *Serializer) ToIni(username string, password string, attributes map[string]map[string]string) error {
 	log.Trace().Msg("Serializing credential and profile to ini file.")
 	credentialErr := thisSerializer.saveCredentialIni(username, password)
@@ -105,6 +108,11 @@ func initIni(fileName string) (*ini.File, error) {
 	return ini.Load(fileName)
 }
 
+/*
+FromIni is responsible for deserializing a Credential and Profile from an ini file. Attribute sections are directly
+translatable to sections in the Profile. Alternate field labels are restored from the ini, so the same Factory
+object will need to be used when deserializing.
+*/
 func (thisSerializer *Serializer) FromIni() (string, string, map[string]map[string]string, error)  {
 	username, password, credentialErr := thisSerializer.loadCredentialIni()
 

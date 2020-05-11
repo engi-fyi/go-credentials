@@ -84,6 +84,19 @@ func (thisCredential *Credential) SetAttribute(key string, value string) error {
 	return nil
 }
 
+/*
+GetSectionAttribute retrieves an attribute that has been stored on the Credential's associated Profile.
+*/
+/*
+SetSectionAttribute sets an attribute on a Credential's associated Profile object. key must match the regex
+'(?m)^[0-9A-Za-z_]+$'. Section can be blank, and the Profile will redirect the output to the default section. The key is
+mandatory, and if the key does not have a value stored in the Profile, an error is returned. There are no restrictions
+on the value of an attribute, aside from Go-level restrictions on strings.
+
+When these values are processed by Save(), they are stored in the config file for the Credential's currently set
+Profile. If username or password is passed as the attribute key, the set is redirected to the Username or Password
+property on the Credential object.
+*/
 func (thisCredential *Credential) SetSectionAttribute(section string, key string, value string) error {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
@@ -126,6 +139,11 @@ func (thisCredential *Credential) GetAttribute(key string) (string, error) {
 	}
 }
 
+/*
+GetSectionAttribute retrieves an attribute that has been stored on the Credential's associated Profile. Section can be blank,
+and the Profile will redirect the output to the default section. The key is mandatory, and if the key does not have a
+value stored in the Profile, an error is returned.
+*/
 func (thisCredential *Credential) GetSectionAttribute(section string, key string) (string, error) {
 	log.Trace().Str("Attribute", key).Msg("Retrieving attribute.")
 	value := thisCredential.Profile.GetAttribute(section, key)

@@ -8,8 +8,19 @@ import (
 	"strings"
 )
 
-// BUG(4): Respect alternates when saving to file.
-// TODO(1000): Should we actually load an existing credential or would the user expect the whole state to be serialized?
+/*
+ToEnv is responsible for serializing a Credential/Profile combination into the environment. Both of the credential
+values are serialized as so:
+
+	APPLICATION_NAME::PROFILE_NAME::USERNAME (or alternate)
+	APPLICATION_NAME::PROFILE_NAME::PASSWORD (or alternate)
+
+Profile attributes are also added to the profile in the following format:
+
+	APPLICATION_NAME::PROFILE_NAME::ATTRIBUTE::SECTION_NAME::KEY_VALUE
+
+SECTION_NAME can be blank.
+*/
 func (thisSerializer *Serializer) ToEnv(username string, password string, attributes map[string]map[string]string) error {
 	log.Trace().Msg("Serializing credential and profile to environment.")
 	credentialErr := thisSerializer.saveCredentialEnv(username, password)
@@ -73,6 +84,16 @@ func (thisSerializer *Serializer) saveProfileEnv(attributes map[string]map[strin
 	return nil
 }
 
+/*
+FromEnv is responsible for scanning environment variables and retrieves applicable variables that have
+the prefix of applicationName and that have at least two "::" in them (which is the separator). The format for an
+environment variable managed by serializer is:
+
+	APPLICATION_NAME::PROFILE_NAME::FIELD_TYPE::SECTION_NAME::KEY_VALUE
+
+Important to note is that if SECTION_NAME is blank then the default profile will be filled, and FIELD_TYPE can be one
+of three values which are USERNAME, PASSWORD, or ATTRIBUTE. If the FIELD_TYPE is ATTRIBUTE, then KEY_VALUE is mandatory.
+*/
 func (thisSerializer *Serializer) FromEnv() (string, string, map[string]map[string]string, error)  {
 	parsedVariables, parseErr := thisSerializer.loadVariablesEnv()
 
@@ -155,6 +176,17 @@ func (thisSerializer *Serializer) getEnvPrefix() string {
 	return strings.ToUpper(thisSerializer.Factory.ApplicationName) + "::" + strings.ToUpper(thisSerializer.ProfileName) + "::"
 }
 
+/*
+ParseEnvironmentVariable is able to process an environment variable and see if matches the expected format for our
+environment variables.
+
+The format for an environment variable managed by serializer is:
+
+	APPLICATION_NAME::PROFILE_NAME::FIELD_TYPE::SECTION_NAME::KEY_VALUE
+
+Important to note is that if SECTION_NAME is blank then the default profile will be filled, and FIELD_TYPE can be one
+of three values which are USERNAME, PASSWORD, or ATTRIBUTE. If the FIELD_TYPE is ATTRIBUTE, then KEY_VALUE is mandatory.
+ */
 func (thisSerializer *Serializer) ParseEnvironmentVariable(environmentVariable string) (string, string, string, bool) {
 	if strings.Count(environmentVariable, "::") < 2 {
 		return "", "", "", false

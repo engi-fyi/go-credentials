@@ -9,16 +9,17 @@ import (
 )
 
 /*
-Load is the default method of loading existing credentials. First it will attempt to load credentials from the
-environment, as they take precedence over file-based credentials. If that is not successful, it will attempt to
-load credentials from the credentials file using the appropriate format set in the sourceFactory. If the file doesn't
-exist or is in an unexpected format, an error will be thrown.
+Load uses LoadFromProfile to create a Credential set to the default profile.
 */
 // TODO(7): Implement json format.
 func Load(sourceFactory *factory.Factory) (*Credential, error) {
 	return LoadFromProfile(global.DEFAULT_PROFILE_NAME, sourceFactory)
 }
 
+/*
+Save is responsible for saving the credential at ~/.application_name/credentials in the specified output format
+that has been set on the Credentials' Factory object.
+*/
 func (thisCredential *Credential) Save() error {
 	if !thisCredential.Factory.Initialized || !thisCredential.Initialized {
 		return errors.New(ERR_NOT_INITIALIZED)
@@ -32,6 +33,10 @@ func (thisCredential *Credential) Save() error {
 	return mySerializer.Serialize(thisCredential.Serialize())
 }
 
+/*
+LoadFromProfile uses Serializer to load an object from the relevant source. The source is determined based on the
+OUTPUT_TYPE of the sourceFactory.
+*/
 func LoadFromProfile(profileName string, sourceFactory *factory.Factory) (*Credential, error) {
 	if !sourceFactory.Initialized {
 		return nil, errors.New(ERR_FACTORY_MUST_BE_INITIALIZED)
@@ -47,12 +52,22 @@ func LoadFromProfile(profileName string, sourceFactory *factory.Factory) (*Crede
 	return Deserialize(sourceFactory, profileName, username, password, attributes)
 }
 
+/*
+Serialize retrieves the data values from a Credential object.
+
+This function is designed to be used as part of a serializer.Serialize() call.
+*/
 func (thisCredential *Credential) Serialize() (string, string, map[string]map[string]string) {
 	return thisCredential.Username,
 		thisCredential.Password,
 		thisCredential.Profile.GetAllAttributes()
 }
 
+/*
+Deserialize takes all of the values required to build a Credential and Profile and uses those values to do so.
+
+This function is designed to be used as part of a serializer.Deserialize() call.
+*/
 func Deserialize(sourceFactory *factory.Factory, profileName string, username string, password string, attributes map[string]map[string]string) (*Credential, error) {
 	myCredential, credErr := New(sourceFactory, username, password)
 	myProfile, profileErr := profile.New(profileName, sourceFactory)

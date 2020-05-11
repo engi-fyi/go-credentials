@@ -6,6 +6,9 @@ import (
 	"github.com/engi-fyi/go-credentials/global"
 )
 
+/*
+New returns a Serializer object with all the defaults required to de(serialize) objects based on the Factory settings.
+ */
 func New(myFactory *factory.Factory, profileName string) *Serializer {
 	return &Serializer{
 		Factory:        myFactory,
@@ -16,6 +19,15 @@ func New(myFactory *factory.Factory, profileName string) *Serializer {
 	}
 }
 
+/*
+Serialize is responsible for serializing an Credential and Profile, determining the file output type based on the value
+of thisSerializer.Factory.OutputType. It is possible to serialize into multiple formats by initiating new factories, but
+there is only one version of config with no extension. Every time a Serialize call is made, the file contents are
+overwritten with the new values. Two formats cannot exist together.
+
+The one exception to these rules is Environment, which doesn't save settings to file, although won't persists between
+sessions.
+*/
 func (thisSerializer *Serializer) Serialize(username string, password string, attributes map[string]map[string]string) error {
 	if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_INI {
 		return thisSerializer.ToIni(username, password, attributes)
@@ -26,6 +38,12 @@ func (thisSerializer *Serializer) Serialize(username string, password string, at
 	}
 }
 
+/*
+Deserialize is responsible for deserializing an Credential and Profile, determining the file input type based on the
+value of thisSerializer.Factory.OutputType.
+
+For the format expected of each file, please see the appropriate From<Type> function.
+*/
 func (thisSerializer *Serializer) Deserialize() (string, string, map[string]map[string]string, error) {
 	if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_INI {
 		return thisSerializer.FromIni()
