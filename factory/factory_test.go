@@ -120,10 +120,16 @@ func TestFactoryLogging(t *testing.T) {
 	assert.NoError(factoryErr)
 	assert.Equal("trace", newFactory.Log.GetLevel().String())
 
-	newFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	newFactory.ModifyLogger("fatal", true)
-	assert.Equal("fatal", newFactory.Log.GetLevel().String())
+	testLogLevels := []string{
+		"panic", "fatal", "error", "warn", "info", "debug", "trace",
+	}
+
+	for i := range testLogLevels {
+		newFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME, false)
+		assert.NoError(factoryErr)
+		newFactory.ModifyLogger(testLogLevels[i], true)
+		assert.Equal(testLogLevels[i], newFactory.Log.GetLevel().String())
+	}
 
 	// Setting this again so that the test logging can continue on correctly.
 	os.Setenv(global.LOG_LEVEL_ENVIRONMENT_KEY, "trace")
