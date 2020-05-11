@@ -49,7 +49,7 @@ func (thisSerializer *Serializer) saveCredentialJson(username string, password s
 		return marshalErr
 	}
 
-	writeErr := ioutil.WriteFile(thisSerializer.CredentialFile, outJson, 0700)
+	writeErr := ioutil.WriteFile(thisSerializer.CredentialFile, outJson, 0600)
 
 	if writeErr != nil {
 		return writeErr
@@ -74,7 +74,7 @@ func (thisSerializer *Serializer) saveProfileJson(attributes map[string]map[stri
 		return marshalErr
 	}
 
-	writeErr := ioutil.WriteFile(thisSerializer.ConfigFile, outJson, 0700)
+	writeErr := ioutil.WriteFile(thisSerializer.ConfigFile, outJson, 0600)
 
 	if writeErr != nil {
 		return writeErr
@@ -106,6 +106,7 @@ func initJson(fileName string) ([]byte, error) {
 		}
 	}
 
+	//#nosec
 	inJson, readErr := ioutil.ReadFile(fileName)
 
 	if readErr != nil {
