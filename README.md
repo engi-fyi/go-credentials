@@ -1,4 +1,8 @@
 # go-credentials
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/engi-fyi/go-credentials)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/engi-fyi/go-credentials)
+![License](https://img.shields.io/github/license/engi-fyi/go-credentials)
+<br />
 ![Build](https://github.com/engi-fyi/go-credentials/workflows/Build/badge.svg)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=engi-fyi_go-credentials&metric=alert_status)](https://sonarcloud.io/dashboard?id=engi-fyi_go-credentials)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=engi-fyi_go-credentials&metric=coverage)](https://sonarcloud.io/dashboard?id=engi-fyi_go-credentials)
