@@ -4,8 +4,6 @@ import (
 	"errors"
 	"github.com/engi-fyi/go-credentials/factory"
 	"github.com/engi-fyi/go-credentials/global"
-	"github.com/rs/zerolog/log"
-	"os"
 	"regexp"
 )
 
@@ -29,17 +27,6 @@ func New(profileName string, credentialFactory *factory.Factory) (*Profile, erro
 	}
 
 	return &newProfile, nil
-}
-
-/*
-Remove deletes a profile configuration file, and deletes the in-memory representation of a profile. Remove is a
-permanent function, and you will not be able to recover a profile that has been Remove()d.
-*/
-func Remove(thisProfile *Profile) error {
-	log.Trace().Str("profile", thisProfile.Name).Msg("Deleting profile.")
-	removeErr := os.Remove(thisProfile.ConfigFileLocation)
-	*thisProfile = Profile{}
-	return removeErr
 }
 
 /*

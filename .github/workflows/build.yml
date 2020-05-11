@@ -68,6 +68,8 @@ jobs:
     needs: Tests
     steps:
       - uses: actions/checkout@v2
+      - run: |
+          git fetch --prune --unshallow
       - name: Download coverage reports
         uses: actions/download-artifact@v1
         with:

@@ -15,9 +15,6 @@ limitations under the License.
 */
 
 /*
-Package environment provides utility functions for accessing and managing environment variables.
-
-It is generally not called as part of the API, and like the global package is mainly used for utility within the rest
-of the go-credentials library.
+Package serializer is responsible for de/serializing Credential and Profile objects into different file formats.
 */
-package environment
+package serializer
