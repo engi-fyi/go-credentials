@@ -21,7 +21,7 @@ Profile attributes are also added to the profile in the following format:
 SECTION_NAME can be blank.
 */
 func (thisSerializer *Serializer) ToEnv(username string, password string, attributes map[string]map[string]string) error {
-	thisSerializer.Factory.Log.Trace().Msg("Serializing credential and profile to environment.")
+	thisSerializer.Factory.Log.Info().Msg("Serializing credential and profile to environment.")
 	credentialErr := thisSerializer.saveCredentialEnv(username, password)
 
 	if credentialErr != nil {
@@ -49,7 +49,7 @@ func (thisSerializer *Serializer) saveCredentialEnv(username string, password st
 		return setErr
 	}
 
-	thisSerializer.Factory.Log.Trace().Msg("Username set.")
+	thisSerializer.Factory.Log.Info().Msg("Username set.")
 
 	passwordKey := strings.ToUpper(prefix + thisSerializer.Factory.GetAlternatePassword())
 	thisSerializer.Factory.Log.Trace().Str("key", passwordKey).Msg("Setting password environment variable.")
@@ -60,7 +60,7 @@ func (thisSerializer *Serializer) saveCredentialEnv(username string, password st
 		return setErr
 	}
 
-	thisSerializer.Factory.Log.Trace().Msg("Password set.")
+	thisSerializer.Factory.Log.Info().Msg("Password set.")
 
 	return nil
 }
@@ -80,6 +80,8 @@ func (thisSerializer *Serializer) saveProfileEnv(attributes map[string]map[strin
 		}
 	}
 
+	thisSerializer.Factory.Log.Trace().Msg("Attribute environment variables set successfully.")
+
 	return nil
 }
 
@@ -94,6 +96,7 @@ Important to note is that if SECTION_NAME is blank then the default profile will
 of three values which are USERNAME, PASSWORD, or ATTRIBUTE. If the FIELD_TYPE is ATTRIBUTE, then KEY_VALUE is mandatory.
 */
 func (thisSerializer *Serializer) FromEnv() (string, string, map[string]map[string]string, error) {
+	thisSerializer.Factory.Log.Info().Msg("Deserializing credential and profile from environment.")
 	parsedVariables, parseErr := thisSerializer.loadVariablesEnv()
 
 	if parseErr != nil {
@@ -120,13 +123,13 @@ func (thisSerializer *Serializer) loadCredentialEnv(parsedVariables map[string]s
 		return "", "", errors.New(ERR_REQUIRED_VARIABLE_USERNAME_NOT_FOUND)
 	}
 
-	thisSerializer.Factory.Log.Trace().Str("username_label", thisSerializer.Factory.GetAlternateUsername()).Msg("Found username label.")
+	thisSerializer.Factory.Log.Debug().Str("username_label", thisSerializer.Factory.GetAlternateUsername()).Msg("Found username label.")
 
 	if _, exists := parsedVariables[thisSerializer.Factory.GetAlternatePassword()]; !exists {
 		return "", "", errors.New(ERR_REQUIRED_VARIABLE_PASSWORD_NOT_FOUND)
 	}
 
-	thisSerializer.Factory.Log.Trace().Str("password_label", thisSerializer.Factory.GetAlternatePassword()).Msg("Found password label.")
+	thisSerializer.Factory.Log.Debug().Str("password_label", thisSerializer.Factory.GetAlternatePassword()).Msg("Found password label.")
 
 	return parsedVariables[thisSerializer.Factory.GetAlternateUsername()],
 		parsedVariables[thisSerializer.Factory.GetAlternatePassword()],

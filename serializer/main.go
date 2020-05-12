@@ -29,7 +29,7 @@ The one exception to these rules is Environment, which doesn't save settings to 
 sessions.
 */
 func (thisSerializer *Serializer) Serialize(username string, password string, attributes map[string]map[string]string) error {
-	thisSerializer.Factory.Log.Trace().Str("output_type", thisSerializer.Factory.OutputType).Msg("Serializing credential and profile.")
+	thisSerializer.Factory.Log.Debug().Str("output_type", thisSerializer.Factory.OutputType).Msg("Serializing credential and profile.")
 
 	if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_INI {
 		return thisSerializer.ToIni(username, password, attributes)
@@ -50,7 +50,7 @@ value of thisSerializer.Factory.OutputType.
 For the format expected of each file, please see the appropriate From<Type> function.
 */
 func (thisSerializer *Serializer) Deserialize() (string, string, map[string]map[string]string, error) {
-	thisSerializer.Factory.Log.Trace().Str("output_type", thisSerializer.Factory.OutputType).Msg("Deserializing credential and profile.")
+	thisSerializer.Factory.Log.Debug().Str("output_type", thisSerializer.Factory.OutputType).Msg("Deserializing credential and profile.")
 
 	if thisSerializer.Factory.OutputType == global.OUTPUT_TYPE_INI {
 		return thisSerializer.FromIni()

@@ -11,7 +11,7 @@ translatable to sections in the Profile. Username and Password will have an appr
 alternate set in the Credential's related Factory.
 */
 func (thisSerializer *Serializer) ToIni(username string, password string, attributes map[string]map[string]string) error {
-	thisSerializer.Factory.Log.Trace().Msg("Serializing credential and profile to ini file.")
+	thisSerializer.Factory.Log.Info().Msg("Serializing credential and profile to ini file.")
 	credentialErr := thisSerializer.saveCredentialIni(username, password)
 
 	if credentialErr != nil {
@@ -28,7 +28,7 @@ func (thisSerializer *Serializer) ToIni(username string, password string, attrib
 }
 
 func (thisSerializer *Serializer) saveCredentialIni(username string, password string) error {
-	thisSerializer.Factory.Log.Trace().Msg("Serializing credential to ini file.")
+	thisSerializer.Factory.Log.Info().Msg("Serializing credential to ini file.")
 	credentialIni, credIniError := initIni(thisSerializer.CredentialFile)
 	thisSerializer.Factory.Log.Trace().Msg("Getting alternate username and password labels.")
 	usernameKey := thisSerializer.Factory.GetAlternateUsername()
@@ -42,7 +42,7 @@ func (thisSerializer *Serializer) saveCredentialIni(username string, password st
 	credentialIni.Section(thisSerializer.ProfileName).Key(usernameKey).SetValue(username)
 	credentialIni.Section(thisSerializer.ProfileName).Key(passwordKey).SetValue(password)
 
-	thisSerializer.Factory.Log.Trace().Msg("Saving credential ini file.")
+	thisSerializer.Factory.Log.Info().Msg("Saving credential ini file.")
 	saveErr := credentialIni.SaveTo(thisSerializer.CredentialFile)
 
 	if saveErr != nil {
@@ -50,7 +50,7 @@ func (thisSerializer *Serializer) saveCredentialIni(username string, password st
 		return saveErr
 	}
 
-	thisSerializer.Factory.Log.Trace().Msg("Credential ini file saved successfully.")
+	thisSerializer.Factory.Log.Info().Msg("Credential ini file saved successfully.")
 	return nil
 }
 
@@ -77,14 +77,14 @@ func (thisSerializer *Serializer) saveProfileIni(attributes map[string]map[strin
 		}
 	}
 
-	thisSerializer.Factory.Log.Trace().Msg("Saving profile ini file.")
+	thisSerializer.Factory.Log.Info().Msg("Saving profile ini file.")
 	saveErr := profileIni.SaveTo(thisSerializer.ConfigFile)
 
 	if saveErr != nil {
 		return saveErr
 	}
 
-	thisSerializer.Factory.Log.Trace().Msg("Profile ini file saved successfully.")
+	thisSerializer.Factory.Log.Info().Msg("Profile ini file saved successfully.")
 	return nil
 }
 
@@ -112,6 +112,7 @@ translatable to sections in the Profile. Alternate field labels are restored fro
 object will need to be used when deserializing.
 */
 func (thisSerializer *Serializer) FromIni() (string, string, map[string]map[string]string, error) {
+	thisSerializer.Factory.Log.Info().Msg("Deserializing credential and profile from ini file.")
 	username, password, credentialErr := thisSerializer.loadCredentialIni()
 
 	if credentialErr != nil {

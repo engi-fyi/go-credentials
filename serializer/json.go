@@ -13,7 +13,7 @@ translatable to parent keys in the config file. Username and Password will have 
 or an alternate set in the Credential's related Factory.
 */
 func (thisSerializer *Serializer) ToJson(username string, password string, attributes map[string]map[string]string) error {
-	thisSerializer.Factory.Log.Trace().Msg("Serializing credential and profile to json file.")
+	thisSerializer.Factory.Log.Info().Msg("Serializing credential and profile to json file.")
 	credentialErr := thisSerializer.saveCredentialJson(username, password)
 
 	if credentialErr != nil {
@@ -54,7 +54,7 @@ func (thisSerializer *Serializer) saveCredentialJson(username string, password s
 		return writeErr
 	}
 
-	thisSerializer.Factory.Log.Trace().Msg("Credential json file saved successfully.")
+	thisSerializer.Factory.Log.Info().Msg("Credential json file saved successfully.")
 	return nil
 }
 
@@ -79,7 +79,7 @@ func (thisSerializer *Serializer) saveProfileJson(attributes map[string]map[stri
 		return writeErr
 	}
 
-	thisSerializer.Factory.Log.Trace().Msg("Profile json file saved successfully.")
+	thisSerializer.Factory.Log.Info().Msg("Profile json file saved successfully.")
 	return nil
 }
 
@@ -162,6 +162,7 @@ translatable to parent keys in the config file. Alternate field labels are resto
 object will need to be used when deserializing.
 */
 func (thisSerializer *Serializer) FromJson() (string, string, map[string]map[string]string, error) {
+	thisSerializer.Factory.Log.Info().Msg("Deserializing credentials and profile from json file.")
 	username, password, credentialErr := thisSerializer.loadCredentialJson()
 
 	if credentialErr != nil {
