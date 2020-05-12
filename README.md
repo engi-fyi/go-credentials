@@ -1,6 +1,7 @@
 # go-credentials
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/engi-fyi/go-credentials)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/engi-fyi/go-credentials)
+[![GoDoc](https://img.shields.io/badge/go--doc-go--credentials-blue)](https://pkg.go.dev/mod/github.com/engi-fyi/go-credentials)
 ![License](https://img.shields.io/github/license/engi-fyi/go-credentials)
 <br />
 ![Build](https://github.com/engi-fyi/go-credentials/workflows/Build/badge.svg)

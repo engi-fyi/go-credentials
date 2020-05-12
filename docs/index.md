@@ -47,9 +47,48 @@ Then, install the dependancies and run the project!
 ```
 user@console:~/$ go get -d .
 user@console:~/$ go run main.go
+10:07AM TRC Deserializing credential and profile. output_type=ini
+10:07AM TRC No alternate username found.
+10:07AM TRC No alternate password found.
+10:07AM TRC Loading credentials from default profile profile=default
+10:07AM TRC Building credential object.
+
+Username: test@engi.fyi
+Password: !my_test_pass==word
+
+10:07AM TRC Setting attribute. key=last_updated
+10:07AM TRC Serializing credential and profile. output_type=ini
+10:07AM TRC Serializing credential and profile to ini file.
+10:07AM TRC Serializing credential to ini file.
+10:07AM TRC Getting alternate username and password labels.
+10:07AM TRC No alternate username found.
+10:07AM TRC No alternate password found.
+10:07AM TRC Adding username and password to credentials file.
+10:07AM TRC Saving credential ini file.
+10:07AM TRC Credential ini file saved successfully.
+10:07AM TRC Serializing profile to ini file.
+10:07AM TRC Processing attributes.
+10:07AM TRC Adding section. attribute=metadata
+10:07AM TRC Adding attribute. attribute=last_update
+10:07AM TRC Adding attribute. attribute=last_updated
+10:07AM TRC Saving profile ini file.
+10:07AM TRC Profile ini file saved successfully.
+10:07AM TRC Deserializing credential and profile. output_type=ini
+10:07AM TRC No alternate username found.
+10:07AM TRC No alternate password found.
+10:07AM TRC Loading credentials from default profile profile=default
+10:07AM TRC Building credential object.
+
+Username: test@engi.fyi
+Password: !my_test_pass==word
+
+10:07AM TRC Retrieving attribute. key=last_updated
+
+Last Updated: 12/05/2020 10:07:49
+
 ```
 ## Basic API Overview
-The following section gives a very basic overview of the `go-credentials` API. To view the full details, please visit out Go Doc page.
+The following section gives a very basic overview of the `go-credentials` API. To view the full details, please visit our [Go Doc](https://pkg.go.dev/mod/github.com/engi-fyi/go-credentials) page.
 ### Factory
 
 - `New`: creates a new Factory object.
