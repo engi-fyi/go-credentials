@@ -58,36 +58,31 @@ func TestCredentialAttributes(t *testing.T) {
 
 	// Username testing
 	log.Info().Msg("Testing username accessibility through GetAttribute.")
-	username, usernameErr := testCredential.GetAttribute("username")
+	username := testCredential.GetAttribute("username")
 	assert.Equal(global.TEST_VAR_USERNAME, username)
-	assert.NoError(usernameErr)
 
 	// Username testing
 	log.Info().Msg("Testing password accessibility through GetAttribute.")
-	password, passwordErr := testCredential.GetAttribute("password")
+	password := testCredential.GetAttribute("password")
 	assert.Equal(global.TEST_VAR_PASSWORD, password)
-	assert.NoError(passwordErr)
 
 	// Attribute that hasn't been set
 	log.Info().Msg("Testing that correct error returned when an attribute not set and GetAttribute is used.")
-	notSet, notSetErr := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	notSet := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal("", notSet)
-	assert.EqualError(notSetErr, ERR_ATTRIBUTE_NOT_EXIST)
 
 	// Setting an attribute
 	log.Info().Msg("Testing the setting of an attribute.")
 	testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	set, setErr := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	set := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, set)
-	assert.NoError(setErr)
 
 	// Testing bad attribute
 	log.Info().Msg("Testing a bad attribute.")
 	badSetErr := testCredential.SetAttribute(global.TEST_VAR_BAD_ATTRIBUTE_NAME, global.TEST_VAR_ATTRIBUTE_VALUE)
 	assert.EqualError(badSetErr, ERR_KEY_MUST_MATCH_REGEX)
-	badSetGet, bsgErr := testCredential.GetAttribute(global.TEST_VAR_BAD_ATTRIBUTE_NAME)
+	badSetGet := testCredential.GetAttribute(global.TEST_VAR_BAD_ATTRIBUTE_NAME)
 	assert.Equal("", badSetGet)
-	assert.EqualError(bsgErr, ERR_ATTRIBUTE_NOT_EXIST)
 
 	// Test username and password redirect
 	setAppend := "setattr"
@@ -222,10 +217,8 @@ func TestCredentialLoadFromIni(t *testing.T) {
 
 	loadedCredential, loadErr = LoadFromProfile(global.DEFAULT_PROFILE_NAME, testFactory)
 	assert.NoError(loadErr)
-	fav, favErr := loadedCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	sav, savErr := loadedCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL + "v2")
-	assert.NoError(favErr)
-	assert.NoError(savErr)
+	fav := loadedCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	sav := loadedCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL + "v2")
 	assert.EqualValues(global.TEST_VAR_ATTRIBUTE_VALUE, fav)
 	assert.EqualValues(global.TEST_VAR_ATTRIBUTE_VALUE+"v2", sav)
 
@@ -325,7 +318,7 @@ func TestCredentialSaveEnv(t *testing.T) {
 	assert.False(exists)
 
 	//testCredentials.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	testCredentials.SetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	testCredentials.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
 	deployErr := testCredentials.Save()
 	assert.NoError(deployErr)
 
@@ -363,8 +356,7 @@ func TestCredentialProfiles(t *testing.T) {
 	testCredential, tcErr = Load(testFactory)
 	assert.NoError(tcErr)
 	assert.Equal(global.DEFAULT_PROFILE_NAME, testCredential.Profile.Name)
-	attrValue, attrErr := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.NoError(attrErr)
+	attrValue := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
 	assert.True(testCredential.Initialized)
 	assert.True(testCredential.Profile.Initialized)
@@ -372,8 +364,7 @@ func TestCredentialProfiles(t *testing.T) {
 	credentialOne, coErr = LoadFromProfile(global.TEST_VAR_FIRST_PROFILE_LABEL, testFactory)
 	assert.NoError(coErr)
 	assert.Equal(global.TEST_VAR_FIRST_PROFILE_LABEL, credentialOne.Profile.Name)
-	attrValue, attrErr = credentialOne.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.NoError(attrErr)
+	attrValue = credentialOne.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
 	assert.Equal(global.TEST_VAR_USERNAME, credentialOne.Username)
 	assert.Equal(global.TEST_VAR_PASSWORD, credentialOne.Password)
@@ -383,8 +374,7 @@ func TestCredentialProfiles(t *testing.T) {
 	credentialTwo, ctErr = LoadFromProfile(global.TEST_VAR_SECOND_PROFILE_LABEL, testFactory)
 	assert.NoError(ctErr)
 	assert.Equal(global.TEST_VAR_SECOND_PROFILE_LABEL, credentialTwo.Profile.Name)
-	attrValue, attrErr = credentialTwo.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.NoError(attrErr)
+	attrValue = credentialTwo.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
 	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE, credentialTwo.Username)
 	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE, credentialTwo.Password)
@@ -392,6 +382,36 @@ func TestCredentialProfiles(t *testing.T) {
 	assert.True(credentialTwo.Profile.Initialized)
 
 	os.RemoveAll(testFactory.ParentDirectory)
+}
+
+/*
+This tests:
+ - Whether a value is set correctly in selectedSection of the returned Credential.
+ - Whether a cloned section is correctly a shallow copy of the initial Credential.
+ */
+func TestSectionCredentialWithValue(t *testing.T) {
+	assert, _ := global.InitTest(t)
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+
+	sectionCredential := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY)
+	assert.NotEqual(testCredential.selectedSection, sectionCredential.selectedSection)
+	assert.NotEqual("", sectionCredential.selectedSection)
+}
+
+/*
+This tests:
+ - Whether a blank section name is handled correctly.
+*/
+func TestSectionBlank(t *testing.T) {
+	assert, _ := global.InitTest(t)
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+
+	sectionCredential := testCredential.Section("")
+	assert.Equal(global.SECTION_NAME_BLANK, sectionCredential.selectedSection)
 }
 
 func TestProfile(t *testing.T) {
@@ -403,16 +423,15 @@ func TestProfile(t *testing.T) {
 
 	testCredentials, credentialErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(credentialErr)
-	attrErr := testCredentials.SetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	attrErr := testCredentials.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
 	assert.NoError(attrErr)
 
-	_, attrErr = testCredentials.GetSectionAttribute("", "")
-	assert.EqualError(attrErr, ERR_ATTRIBUTE_NOT_EXIST)
-	_, attrErr = testCredentials.GetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, "")
-	assert.EqualError(attrErr, ERR_ATTRIBUTE_NOT_EXIST)
-	myAttribute, attrErr := testCredentials.GetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.NoError(attrErr)
-	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, myAttribute)
+	attrValue := testCredentials.Section("").GetAttribute("")
+	assert.Equal("", attrValue)
+	attrValue = testCredentials.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute("")
+	assert.Equal("", attrValue)
+	attrValue = testCredentials.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
 }
 
 func buildTestCredentials() (*Credential, error) {

@@ -61,18 +61,34 @@ passed as the attribute key, the set is redirected to the Username or Password p
 */
 func (thisCredential *Credential) SetAttribute(key string, value string) error {
 	if strings.ToLower(key) == global.USERNAME_LABEL {
-		thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to set username.")
-		thisCredential.Username = value
+		if thisCredential.selectedSection == "" { // can only get here if .Section() is not used.
+			thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to set username.")
+			thisCredential.Username = value
+		} else {
+			thisCredential.Factory.Log.Error().Msg("Cannot redirect attribute request to username because a section has been specified.")
+			return errors.New(ERR_CANNOT_SET_USERNAME_WHEN_USING_SECTION)
+		}
+
 	} else if strings.ToLower(key) == global.PASSWORD_LABEL {
-		thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to set password.")
-		thisCredential.Password = value
+		if thisCredential.selectedSection == "" { // can only get here if .Section() is not used.
+			thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to set password.")
+			thisCredential.Password = value
+		} else {
+			thisCredential.Factory.Log.Error().Msg("Cannot redirect attribute request to password because a section has been specified.")
+			return errors.New(ERR_CANNOT_SET_PASSWORD_WHEN_USING_SECTION)
+		}
 	} else {
 		keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 		if keyRegex.MatchString(key) {
 			thisCredential.Factory.Log.Trace().Str("key", key).Msg("Setting attribute.")
+			var attributeErr error
 
-			attributeErr := thisCredential.Profile.SetAttribute(global.NO_SECTION_KEY, key, value)
+			if thisCredential.selectedSection == global.SECTION_NAME_BLANK {
+				attributeErr = thisCredential.Profile.SetAttribute(global.NO_SECTION_KEY, key, value)
+			} else {
+				attributeErr = thisCredential.Profile.SetAttribute(thisCredential.selectedSection, key, value)
+			}
 
 			if attributeErr != nil {
 				thisCredential.Factory.Log.Error().Err(attributeErr).Str("key", key).Msg("Error setting attribute.")
@@ -87,6 +103,18 @@ func (thisCredential *Credential) SetAttribute(key string, value string) error {
 	return nil
 }
 
+func (thisCredential *Credential) Section(section string) *Credential {
+	credentialWithSectionSet := *thisCredential
+
+	if section == "" {
+		credentialWithSectionSet.selectedSection = global.SECTION_NAME_BLANK
+	} else {
+		credentialWithSectionSet.selectedSection = section
+	}
+
+	return &credentialWithSectionSet
+}
+
 /*
 SetSectionAttribute sets an attribute on a Credential's associated Profile object. key must match the regex
 '(?m)^[0-9A-Za-z_]+$'. Section can be blank, and the Profile will redirect the output to the default section. The key is
@@ -97,6 +125,7 @@ When these values are processed by Save(), they are stored in the config file fo
 Profile. If username or password is passed as the attribute key, the set is redirected to the Username or Password
 property on the Credential object.
 */
+/*
 func (thisCredential *Credential) SetSectionAttribute(section string, key string, value string) error {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
@@ -116,27 +145,34 @@ func (thisCredential *Credential) SetSectionAttribute(section string, key string
 
 	return nil
 }
+*/
 
 /*
 GetAttribute retrieves an attribute that has been stored on the Credential's associated Profile. A key
 is passed in, and if the key does not have a value stored in the Profile, an error is returned.
 */
-func (thisCredential *Credential) GetAttribute(key string) (string, error) {
+func (thisCredential *Credential) GetAttribute(key string) string {
 	if strings.ToLower(key) == global.USERNAME_LABEL {
 		thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to value of username.")
-		return thisCredential.Username, nil
+		return thisCredential.Username
 	} else if strings.ToLower(key) == global.PASSWORD_LABEL {
 		thisCredential.Factory.Log.Trace().Msg("Redirected attribute request to value of password.")
-		return thisCredential.Password, nil
+		return thisCredential.Password
 	} else {
 		thisCredential.Factory.Log.Trace().Str("key", key).Msg("Retrieving attribute.")
-		value := thisCredential.Profile.GetAttribute(global.NO_SECTION_KEY, key)
+		var value string
+
+		if thisCredential.selectedSection == "" {
+			value = thisCredential.Profile.GetAttribute(global.NO_SECTION_KEY, key)
+		} else {
+			value = thisCredential.Profile.GetAttribute(thisCredential.selectedSection, key)
+		}
 
 		if len(value) > 0 {
-			return value, nil
+			return value
 		} else {
 			thisCredential.Factory.Log.Trace().Str("key", key).Msg("That attribute doesn't exist.")
-			return "", errors.New(ERR_ATTRIBUTE_NOT_EXIST)
+			return ""
 		}
 	}
 }
@@ -146,6 +182,7 @@ GetSectionAttribute retrieves an attribute that has been stored on the Credentia
 and the Profile will redirect the output to the default section. The key is mandatory, and if the key does not have a
 value stored in the Profile, an error is returned.
 */
+/*
 func (thisCredential *Credential) GetSectionAttribute(section string, key string) (string, error) {
 	thisCredential.Factory.Log.Trace().Str("key", key).Msg("Retrieving attribute.")
 	value := thisCredential.Profile.GetAttribute(section, key)
@@ -157,3 +194,4 @@ func (thisCredential *Credential) GetSectionAttribute(section string, key string
 		return "", errors.New(ERR_ATTRIBUTE_NOT_EXIST)
 	}
 }
+ */

@@ -8,3 +8,5 @@ const ERR_FACTORY_PRIVATE_ATTEMPT_DEPLOY = "you have attempted to deploy environ
 const ERR_JSON_FUNCTIONALITY_NOT_IMPLEMENTED = "sorry, that feature has not been implemented yet"
 const ERR_CREDENTIAL_NOT_INITIALIZED = "sorry, this credential has not been initialized"
 const ERR_NOT_INITIALIZED = "sorry something has not been initialized, make sure you use New and do not create a struct manually"
+const ERR_CANNOT_SET_USERNAME_WHEN_USING_SECTION = "you cannot set username via this method when using the Section() method"
+const ERR_CANNOT_SET_PASSWORD_WHEN_USING_SECTION = "you cannot set password via this method when using the Section() method"
