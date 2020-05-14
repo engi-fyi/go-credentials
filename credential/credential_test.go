@@ -356,7 +356,29 @@ func TestCredentialDeleteAttributes(t *testing.T) {
 	deleteErr := testCredential.DeleteAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.NoError(deleteErr)
 	assert.Equal("", testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	deleteErr = testCredential.DeleteAttribute(global.TEST_VAR_USERNAME_LABEL)
+	assert.EqualError(deleteErr, ERR_CANNOT_REMOVE_USERNAME)
+	deleteErr = testCredential.DeleteAttribute(global.TEST_VAR_PASSWORD_LABEL)
+	assert.EqualError(deleteErr, ERR_CANNOT_REMOVE_PASSWORD)
 	parentDirectoryCleanup(t)
+}
+
+func TestCredentialCannotRedirectUsernameSetAttribute(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing attempting to set username when a section has been set.")
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_USERNAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.EqualError(setErr, ERR_CANNOT_SET_USERNAME_WHEN_USING_SECTION)
+}
+
+func TestCredentialCannotRedirectPasswordSetAttribute(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing attempting to set password when a section has been set.")
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_PASSWORD_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.EqualError(setErr, ERR_CANNOT_SET_PASSWORD_WHEN_USING_SECTION)
 }
 
 func TestCredentialDeleteSectionAttributes(t *testing.T) {
