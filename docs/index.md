@@ -29,7 +29,7 @@ func main() {
 	fmt.Printf("Username: %s\n", myCredential.Username)
 	fmt.Printf("Password: %s\n\n", myCredential.Password)
 
-	myCredential.SetSectionAttribute("metadata", "last_updated", time.Now().Format("02/01/2006 15:04:05"))
+	myCredential.Section("metadata").SetAttribute("last_updated", time.Now().Format("02/01/2006 15:04:05"))
 	myCredential.Save()
 	myCredential = nil
 
@@ -38,12 +38,12 @@ func main() {
 	fmt.Printf("Username: %s\n", yourCredential.Username)
 	fmt.Printf("Password: %s\n", yourCredential.Password)
 
-	lastUpdated, _ := yourCredential.GetSectionAttribute("metadata", "last_updated")
+	lastUpdated := yourCredential.Section("metadata").GetAttribute("last_updated")
 	fmt.Printf("Last Updated: %s\n", lastUpdated)
 }
 ```
 
-Then, install the dependancies and run the project!
+Then, install the dependencies and run the project!
 ```
 user@console:~/$ go get -d .
 user@console:~/$ go run main.go

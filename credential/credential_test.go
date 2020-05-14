@@ -186,7 +186,7 @@ func TestCredentialLoadFromFileNoFile(t *testing.T) {
 
 	for _, fileType := range serializer.GetSupportedFileTypes() {
 		log.Info().Msgf("Testing the '%v' file type.", fileType)
-		secondTestFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+		secondTestFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 		assert.NoError(factoryErr)
 		outputErr := secondTestFactory.SetOutputType(fileType)
 		assert.NoError(outputErr)
@@ -198,7 +198,7 @@ func TestCredentialLoadFromFileNoFile(t *testing.T) {
 func TestCredentialLoadFactoryInvalidOutputType(t *testing.T) {
 	assert, log := global.InitTest(t)
 	log.Info().Msg("Testing an invalid output type against a factory object.")
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
 	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
 	_, loadErr := Load(testFactory)
@@ -221,7 +221,7 @@ func TestCredentialLoadEnvNoValues(t *testing.T) {
 		assert.NoError(usErr)
 	}
 
-	secondTestFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	secondTestFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
 	soErr := secondTestFactory.SetOutputType(global.OUTPUT_TYPE_ENV)
 	assert.NoError(soErr)
@@ -345,6 +345,34 @@ func TestCredentialLoadSecondProfile(t *testing.T) {
 	parentDirectoryCleanup(t)
 }
 
+func TestCredentialDeleteAttributes(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the loading of an existing credential using the second profile.")
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(setErr)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	deleteErr := testCredential.DeleteAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	assert.NoError(deleteErr)
+	assert.Equal("", testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	parentDirectoryCleanup(t)
+}
+
+func TestCredentialDeleteSectionAttributes(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the loading of an existing credential using the second profile.")
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(setErr)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	deleteErr := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).DeleteAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	assert.NoError(deleteErr)
+	assert.Equal("", testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	parentDirectoryCleanup(t)
+}
+
 /*
 This tests:
  - Whether a value is set correctly in selectedSection of the returned Credential.
@@ -353,7 +381,7 @@ This tests:
 func TestSectionCredentialWithValue(t *testing.T) {
 	assert, log := global.InitTest(t)
 	log.Info().Msg("Testing to ensure Section() returns a value as expected")
-	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(tcErr)
 
@@ -369,7 +397,7 @@ This tests:
 func TestSectionBlank(t *testing.T) {
 	assert, log := global.InitTest(t)
 	log.Info().Msg("Testing to ensure Section() returns a the blank section value as expected")
-	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(tcErr)
 
@@ -380,7 +408,7 @@ func TestSectionBlank(t *testing.T) {
 func TestProfile(t *testing.T) {
 	assert, _ := global.InitTest(t)
 
-	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	_, credentialErr := NewProfile("", testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.EqualError(credentialErr, profile.ERR_PROFILE_NAME_MUST_MATCH_REGEX)
 
@@ -398,7 +426,7 @@ func TestProfile(t *testing.T) {
 }
 
 func buildTestCredentials() (*Credential, error) {
-	buildFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, true)
+	buildFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 
 	if factoryErr != nil {
 		return nil, factoryErr
@@ -409,7 +437,7 @@ func buildTestCredentials() (*Credential, error) {
 
 func initTest(t* testing.T) (*as.Assertions, zerolog.Logger, *factory.Factory) {
 	assert, log := global.InitTest(t)
-	testFactory, tfErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, tfErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(tfErr)
 	assert.True(testFactory.Initialized)
 	return assert, log, testFactory

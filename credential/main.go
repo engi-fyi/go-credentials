@@ -103,6 +103,10 @@ func (thisCredential *Credential) SetAttribute(key string, value string) error {
 	return nil
 }
 
+/*
+Section is used as an intermediary function between a credential and GetAttribute or SetAttribute. When you pass a
+section name, the subsequent method attribute function will be called against that section.
+*/
 func (thisCredential *Credential) Section(section string) *Credential {
 	credentialWithSectionSet := *thisCredential
 
@@ -114,38 +118,6 @@ func (thisCredential *Credential) Section(section string) *Credential {
 
 	return &credentialWithSectionSet
 }
-
-/*
-SetSectionAttribute sets an attribute on a Credential's associated Profile object. key must match the regex
-'(?m)^[0-9A-Za-z_]+$'. Section can be blank, and the Profile will redirect the output to the default section. The key is
-mandatory, and if the key does not have a value stored in the Profile, an error is returned. There are no restrictions
-on the value of an attribute, aside from Go-level restrictions on strings.
-
-When these values are processed by Save(), they are stored in the config file for the Credential's currently set
-Profile. If username or password is passed as the attribute key, the set is redirected to the Username or Password
-property on the Credential object.
-*/
-/*
-func (thisCredential *Credential) SetSectionAttribute(section string, key string, value string) error {
-	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
-
-	if keyRegex.MatchString(key) {
-		thisCredential.Factory.Log.Trace().Str("key", key).Msg("Setting attribute.")
-
-		attributeErr := thisCredential.Profile.SetAttribute(section, key, value)
-
-		if attributeErr != nil {
-			thisCredential.Factory.Log.Error().Err(attributeErr).Str("key", section + "\\" + key).Msg("Error setting attribute.")
-			return attributeErr
-		}
-	} else {
-		thisCredential.Factory.Log.Error().Msg(ERR_KEY_MUST_MATCH_REGEX)
-		return errors.New(ERR_KEY_MUST_MATCH_REGEX)
-	}
-
-	return nil
-}
-*/
 
 /*
 GetAttribute retrieves an attribute that has been stored on the Credential's associated Profile. A key
@@ -178,20 +150,23 @@ func (thisCredential *Credential) GetAttribute(key string) string {
 }
 
 /*
-GetSectionAttribute retrieves an attribute that has been stored on the Credential's associated Profile. Section can be blank,
-and the Profile will redirect the output to the default section. The key is mandatory, and if the key does not have a
-value stored in the Profile, an error is returned.
+DeleteAttribute removes an attribute that has been stored on the Credential's associated Profile. If the value is
+deleted an error is not returned. Otherwise, an error will be returned.
 */
-/*
-func (thisCredential *Credential) GetSectionAttribute(section string, key string) (string, error) {
-	thisCredential.Factory.Log.Trace().Str("key", key).Msg("Retrieving attribute.")
-	value := thisCredential.Profile.GetAttribute(section, key)
-
-	if len(value) > 0 {
-		return value, nil
+func (thisCredential *Credential) DeleteAttribute(key string) error {
+	if strings.ToLower(key) == global.USERNAME_LABEL {
+		thisCredential.Factory.Log.Trace().Msg("Can't delete username from a Credential.")
+		return errors.New(ERR_CANNOT_REMOVE_USERNAME)
+	} else if strings.ToLower(key) == global.PASSWORD_LABEL {
+		thisCredential.Factory.Log.Trace().Msg("Can't delete password from a Credential.")
+		return errors.New(ERR_CANNOT_REMOVE_PASSWORD)
 	} else {
-		thisCredential.Factory.Log.Trace().Str("key", key).Msg("That attribute doesn't exist.")
-		return "", errors.New(ERR_ATTRIBUTE_NOT_EXIST)
+		thisCredential.Factory.Log.Trace().Str("key", key).Msg("Deleting attribute.")
+
+		if thisCredential.selectedSection == "" {
+			return thisCredential.Profile.DeleteAttribute(global.NO_SECTION_KEY, key)
+		} else {
+			return thisCredential.Profile.DeleteAttribute(thisCredential.selectedSection, key)
+		}
 	}
 }
- */

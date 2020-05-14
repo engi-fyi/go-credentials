@@ -2,144 +2,164 @@ package factory
 
 import (
 	"github.com/engi-fyi/go-credentials/global"
+	"github.com/rs/zerolog/log"
 	"os"
-	"strings"
 	"testing"
 )
 
 func TestFactoryNew(t *testing.T) {
 	assert, _ := global.InitTest(t)
-	_, factoryErr := New("", false)
-	assert.EqualError(factoryErr, ERR_APPLICATION_NAME_BLANK)
-	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
+	log.Info().Msg("Testing the creation of a new factory.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
-	assert.Equal(newFactory.ApplicationName, global.TEST_VAR_APPLICATION_NAME)
-	assert.False(newFactory.UseEnvironment)
-	assert.Equal(newFactory.OutputType, global.OUTPUT_TYPE_INI)
-	assert.True(newFactory.Initialized)
-}
-
-func TestFactoryInitialize(t *testing.T) {
-	assert, log := global.InitTest(t)
-
-	log.Info().Msg("Testing to make sure a blank application name cannot be passed.")
-	testFactory, blankErr := New("", false)
-	assert.EqualError(blankErr, ERR_APPLICATION_NAME_BLANK)
-
-	log.Info().Msg("Creating and initializing a new Factory.")
-	testFactory, newErr := New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(newErr)
+	assert.Equal(testFactory.ApplicationName, global.TEST_VAR_APPLICATION_NAME)
+	assert.False(testFactory.UseEnvironment)
+	assert.Equal(testFactory.OutputType, global.OUTPUT_TYPE_INI)
 	assert.True(testFactory.Initialized)
-
-	log.Info().Msg("Checking to make sure that the parent directory was created.")
 	assert.Equal(testGetParentDirectory(testFactory.ApplicationName), testFactory.ParentDirectory)
 	assert.DirExists(testFactory.ParentDirectory)
-
-	log.Info().Msg("Checking to make sure that the configuration directory was created.")
-	assert.Equal(testGetConfigDirectory(testFactory.ApplicationName), testFactory.ConfigDirectory)
-	assert.DirExists(testFactory.ConfigDirectory)
-
 	os.RemoveAll(testFactory.ParentDirectory)
 }
 
+func TestFactoryNoApplicationName(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing to make sure a blank application name cannot be passed.")
+	_, factoryErr := New("")
+	assert.EqualError(factoryErr, ERR_APPLICATION_NAME_BLANK)
+}
+
 func TestSetOutputType(t *testing.T) {
-	assert, _ := global.InitTest(t)
-
-	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing valid output types.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
+	assert.Equal(global.OUTPUT_TYPE_INI, testFactory.OutputType)
 
-	nfiErr := newFactory.Initialize()
-	assert.NoError(nfiErr)
+	for _, value := range []string{global.OUTPUT_TYPE_JSON, global.OUTPUT_TYPE_INI} {
+		outputErr := testFactory.SetOutputType(value)
+		assert.NoError(outputErr)
+	}
+}
 
-	otjErr := newFactory.SetOutputType(global.OUTPUT_TYPE_JSON)
-	assert.NoError(otjErr)
-
-	otiErr := newFactory.SetOutputType(global.OUTPUT_TYPE_INI)
-	assert.NoError(otiErr)
-
-	iotErr := newFactory.SetOutputType(global.OUTPUT_TYPE_INVALID)
+func TestSetInvalidOutputType(t *testing.T) {
+	assert, _ := global.InitTest(t)
+	log.Info().Msg("Testing invalid output type.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
+	assert.NoError(factoryErr)
+	iotErr := testFactory.SetOutputType(global.OUTPUT_TYPE_INVALID)
 	assert.EqualError(iotErr, ERR_INVALID_OUTPUT_TYPE)
 }
 
-func TestSetEnvironmentKeys(t *testing.T) {
-	assert, _ := global.InitTest(t)
-
-	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
+func TestAlternateUsernameEmpty(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing blank alternate username.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
-	initErr := newFactory.Initialize()
-	assert.NoError(initErr)
-
-	altErr := newFactory.SetEnvironmentKeys(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
-	assert.NoError(altErr)
-	assert.EqualValues(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, newFactory.GetAlternateUsername())
-	assert.EqualValues(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, newFactory.GetAlternatePassword())
-
-	altErr = newFactory.SetEnvironmentKeys(global.TEST_VAR_ENVIRONMENT_BAD_LABEL, global.TEST_VAR_USERNAME_ALTERNATE_LABEL)
-	assert.EqualError(altErr, ERR_KEY_MUST_MATCH_REGEX)
-	assert.EqualValues(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, newFactory.GetAlternateUsername())
-
-	altErr = newFactory.SetEnvironmentKeys(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, global.TEST_VAR_ENVIRONMENT_BAD_LABEL)
-	assert.EqualError(altErr, ERR_KEY_MUST_MATCH_REGEX)
-	assert.EqualValues(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, newFactory.GetAlternatePassword())
-
-	altErr = newFactory.SetEnvironmentKeys(global.TEST_VAR_ENVIRONMENT_BAD_LABEL, global.TEST_VAR_ENVIRONMENT_BAD_LABEL)
-	assert.EqualError(altErr, ERR_KEY_MUST_MATCH_REGEX)
-	assert.EqualValues(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, newFactory.GetAlternateUsername())
-	assert.EqualValues(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, newFactory.GetAlternatePassword())
+	setErr := testFactory.SetAlternateUsername("")
+	assert.EqualError(setErr, ERR_ALTERNATE_USERNAME_CANNOT_BE_BLANK)
+	assert.Equal(global.TEST_VAR_USERNAME_LABEL, testFactory.GetAlternateUsername())
 }
 
-func TestFactoryAlternates(t *testing.T) {
-	assert, _ := global.InitTest(t)
-	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
-	newFactory.Initialize()
+func TestAlternateUsername(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing setting an alternate username.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
+	assert.NoError(factoryErr)
+	testFactory.SetAlternateUsername(global.TEST_VAR_USERNAME_ALTERNATE_LABEL)
+	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, testFactory.GetAlternateUsername())
+	assert.Equal(global.TEST_VAR_PASSWORD_LABEL, testFactory.GetAlternatePassword())
+	os.RemoveAll(testFactory.ParentDirectory)
+}
+
+func TestAlternatePasswordEmpty(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing blank alternate username.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
+	assert.NoError(factoryErr)
+	setErr := testFactory.SetAlternatePassword("")
+	assert.EqualError(setErr, ERR_ALTERNATE_PASSWORD_CANNOT_BE_BLANK)
+	assert.Equal(global.TEST_VAR_PASSWORD_LABEL, testFactory.GetAlternatePassword())
+}
+
+func TestAlternatePassword(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing setting an alternate password.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
+	assert.NoError(factoryErr)
+	testFactory.SetAlternatePassword(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
+	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, testFactory.GetAlternatePassword())
+	assert.Equal(global.TEST_VAR_USERNAME_LABEL, testFactory.GetAlternateUsername())
+	os.RemoveAll(testFactory.ParentDirectory)
+}
+
+func TestAlternatesEmpty(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing blank alternates.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
 
-	assert.Equal("username", newFactory.GetAlternateUsername())
-	assert.Equal("password", newFactory.GetAlternatePassword())
+	setErr := testFactory.SetAlternates("", global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
+	assert.EqualError(setErr, ERR_ALTERNATE_USERNAME_CANNOT_BE_BLANK)
+	assert.Equal(global.TEST_VAR_USERNAME_LABEL, testFactory.GetAlternateUsername())
+	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, testFactory.GetAlternatePassword())
+	setErr = testFactory.SetAlternates(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, "")
+	assert.EqualError(setErr, ERR_ALTERNATE_PASSWORD_CANNOT_BE_BLANK)
+	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, testFactory.GetAlternateUsername())
+	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, testFactory.GetAlternatePassword())
 
-	bauError := newFactory.SetAlternateUsername("")
-	assert.EqualError(bauError, ERR_ALTERNATE_USERNAME_CANNOT_BE_BLANK)
-	bapError := newFactory.SetAlternatePassword("")
-	assert.EqualError(bapError, ERR_ALTERNATE_PASSWORD_CANNOT_BE_BLANK)
-	newFactory.SetAlternateUsername(global.TEST_VAR_USERNAME_ALTERNATE_LABEL)
-	newFactory.SetAlternatePassword(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
-	assert.Equal(strings.ToLower(global.TEST_VAR_USERNAME_ALTERNATE_LABEL), newFactory.GetAlternateUsername())
-	assert.Equal(strings.ToLower(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL), newFactory.GetAlternatePassword())
+	alternateUsername, alternatePassword := testFactory.GetAlternates()
+	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, alternateUsername)
+	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, alternatePassword)
+}
+
+func TestAlternates(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing alternates.")
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
+	assert.NoError(factoryErr)
+
+	setErr := testFactory.SetAlternates(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, global.TEST_VAR_PASSWORD_ALTERNATE_LABEL)
+	assert.NoError(setErr)
+	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, testFactory.GetAlternateUsername())
+	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, testFactory.GetAlternatePassword())
+
+	alternateUsername, alternatePassword := testFactory.GetAlternates()
+	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE_LABEL, alternateUsername)
+	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE_LABEL, alternatePassword)
+	os.RemoveAll(testFactory.ParentDirectory)
 }
 
 func TestFactoryLogging(t *testing.T) {
-	assert, _ := global.InitTest(t)
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing factory logging methods.")
 	os.Unsetenv(global.LOG_LEVEL_ENVIRONMENT_KEY)
-	newFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, factoryErr := New(global.TEST_VAR_APPLICATION_NAME)
 	os.Setenv(global.LOG_LEVEL_ENVIRONMENT_KEY, "trace")
 	assert.NoError(factoryErr)
-	assert.Equal("", newFactory.Log.GetLevel().String())
+	assert.Equal("", testFactory.Log.GetLevel().String())
 
-	newFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME)
 	os.Unsetenv(global.LOG_LEVEL_ENVIRONMENT_KEY)
 	assert.NoError(factoryErr)
-	assert.Equal("trace", newFactory.Log.GetLevel().String())
+	assert.Equal("trace", testFactory.Log.GetLevel().String())
 
 	testLogLevels := []string{
 		"panic", "fatal", "error", "warn", "info", "debug", "trace",
 	}
 
 	for i := range testLogLevels {
-		newFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME, false)
+		testFactory, factoryErr = New(global.TEST_VAR_APPLICATION_NAME)
 		assert.NoError(factoryErr)
-		newFactory.ModifyLogger(testLogLevels[i], true)
-		assert.Equal(testLogLevels[i], newFactory.Log.GetLevel().String())
+		testFactory.ModifyLogger(testLogLevels[i], true)
+		assert.Equal(testLogLevels[i], testFactory.Log.GetLevel().String())
 	}
 
 	// Setting this again so that the test logging can continue on correctly.
 	os.Setenv(global.LOG_LEVEL_ENVIRONMENT_KEY, "trace")
+	os.RemoveAll(testFactory.ParentDirectory)
 }
 
 func testGetParentDirectory(applicationName string) string {
 	homeDirectory, _ := os.UserHomeDir()
 	return homeDirectory + "/." + applicationName + "/"
-}
-
-func testGetConfigDirectory(applicationName string) string {
-	return testGetParentDirectory(applicationName) + "config/"
 }
