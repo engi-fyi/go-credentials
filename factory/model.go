@@ -20,6 +20,6 @@ type Factory struct {
 	UseEnvironment  bool
 	Initialized     bool
 	OutputType      string
-	Log 			*zerolog.Logger
+	Log             *zerolog.Logger
 	alternates      map[string]string
 }

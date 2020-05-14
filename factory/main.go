@@ -12,8 +12,8 @@ import (
 
 /*
 New creates a very simple Factory object, with defaults based on the ApplicationName.
- */
-func New(applicationName string, useEnvironment bool) (*Factory, error) {
+*/
+func New(applicationName string) (*Factory, error) {
 	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
 
 	if applicationName == "" {
@@ -26,7 +26,6 @@ func New(applicationName string, useEnvironment bool) (*Factory, error) {
 
 	newFactory := Factory{
 		ApplicationName: applicationName,
-		UseEnvironment:  useEnvironment,
 		OutputType:      global.OUTPUT_TYPE_INI,
 	}
 
@@ -52,10 +51,11 @@ func (thisFactory *Factory) initLogger() {
 		thisFactory.ModifyLogger(logLevel, false)
 	}
 }
+
 /*
 ModifyLogger is responsible for reconfiguring the log level and whether or not pretty output is used. Available log
 levels are panic, fatal, error, warn, info, debug, trace, and disabled. By default, all logging output is disabled.
- */
+*/
 func (thisFactory *Factory) ModifyLogger(logLevel string, pretty bool) {
 	var logger zerolog.Logger
 
@@ -169,7 +169,7 @@ func (thisFactory *Factory) SetAlternateUsername(alternateUsername string) error
 
 /*
 GetAlternateUsername gets a label to be used in lieu of username in environment variables.
- */
+*/
 func (thisFactory *Factory) GetAlternateUsername() string {
 	if val, exists := thisFactory.alternates["username"]; exists {
 		thisFactory.Log.Trace().Str("username", thisFactory.alternates["username"]).Msg("Found alternate.")
@@ -195,10 +195,10 @@ func (thisFactory *Factory) SetAlternatePassword(alternatePassword string) error
 }
 
 /*
-GetAlternates the alternates map.
+GetAlternates returns the username and password.
 */
-func (thisFactory *Factory) GetAlternates() map[string]string {
-	return thisFactory.alternates
+func (thisFactory *Factory) GetAlternates() (string, string) {
+	return thisFactory.GetAlternateUsername(), thisFactory.GetAlternatePassword()
 }
 
 /*
@@ -232,26 +232,20 @@ func (thisFactory *Factory) SetOutputType(outputType string) error {
 }
 
 /*
-Set environment keys is a function that sets the alternates for both username and password at the same time. This
-is the same as calling SetAlternateUsername, then calling SetAlternatePassword in a separate call.
+SetAlternates is a function that sets the alternates for both username and password at the same time. This
+is the same as calling SetAlternateUsername, then calling SetAlternatePassword in a separate call. If you enter a blank
+value in either parameter, it won't be set and an error will be returned. However, the other variable will be set.
 */
-func (thisFactory *Factory) SetEnvironmentKeys(usernameKey string, passwordKey string) error {
-	keyRegex := regexp.MustCompile(global.REGEX_KEY_NAME)
+func (thisFactory *Factory) SetAlternates(usernameKey string, passwordKey string) error {
+	usernameErr := thisFactory.SetAlternateUsername(usernameKey)
+	passwordErr := thisFactory.SetAlternatePassword(passwordKey)
 
-	if keyRegex.MatchString(usernameKey) {
-		thisFactory.Log.Trace().Str("key", usernameKey).Msg("Alternate environment key for username registered.")
-		thisFactory.alternates["username"] = usernameKey
-	} else {
-		thisFactory.Log.Error().Msg("Sorry the key for username does not match the requirements.")
-		return errors.New(ERR_KEY_MUST_MATCH_REGEX)
+	if usernameErr != nil {
+		return usernameErr
 	}
 
-	if keyRegex.MatchString(passwordKey) {
-		thisFactory.Log.Trace().Str("key", passwordKey).Msg("Alternate environment key for password registered.")
-		thisFactory.alternates["password"] = passwordKey
-	} else {
-		thisFactory.Log.Error().Msg("Sorry the key for password does not match the requirements.")
-		return errors.New(ERR_KEY_MUST_MATCH_REGEX)
+	if passwordErr != nil {
+		return passwordErr
 	}
 
 	return nil

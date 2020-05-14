@@ -38,7 +38,7 @@ func TestFromIni(t *testing.T) {
 }
 
 func createTestIni(profileName string, useAlternates bool) (*factory.Factory, *Serializer, error) {
-	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	testSerializer := New(testFactory, profileName)
 	attributes := map[string]map[string]string{
 		global.TEST_VAR_FIRST_SECTION_KEY: {

@@ -15,4 +15,5 @@ type Credential struct {
 	Factory              *factory.Factory
 	Profile              *profile.Profile
 	environmentVariables []string
+	selectedSection      string
 }

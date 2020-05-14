@@ -1,11 +1,11 @@
 package global
 
 import (
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 // InitTest is used by test functions to initialize logger settings and the assert pkg.
