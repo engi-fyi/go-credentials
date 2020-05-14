@@ -5,38 +5,37 @@ import (
 	"github.com/engi-fyi/go-credentials/global"
 	"github.com/engi-fyi/go-credentials/profile"
 	"github.com/engi-fyi/go-credentials/serializer"
+	"github.com/rs/zerolog"
+	as "github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
 
-func TestCredentialNew(t *testing.T) {
-	assert, log := global.InitTest(t)
-
-	// Test basic info.
-
+func TestCredentialNewBadFactory(t *testing.T) {
+	assert, log, _ := initTest(t)
 	log.Info().Msg("Testing to ensure an initialized factory is required.")
 	blankFactory := factory.Factory{}
 	_, factoryErr := New(&blankFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.EqualError(factoryErr, ERR_FACTORY_MUST_BE_INITIALIZED)
 	_, factoryErr = New(nil, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.EqualError(factoryErr, ERR_FACTORY_MUST_BE_INITIALIZED)
+}
 
-	factory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	fiErr := factory.Initialize()
-	assert.NoError(fiErr)
-	assert.True(factory.Initialized)
-
+func TestCredentialNewBlankUsernameAndPassword(t *testing.T) {
+	assert, log, testFactory := initTest(t)
 	log.Info().Msg("Testing to ensure blank username or password can't be used.")
-	_, missingErr := New(factory, "", global.TEST_VAR_PASSWORD)
+	_, missingErr := New(testFactory, "", global.TEST_VAR_PASSWORD)
 	assert.EqualError(missingErr, ERR_USERNAME_OR_PASSWORD_NOT_SET)
-	_, missingErr = New(factory, global.TEST_VAR_USERNAME, "")
+	_, missingErr = New(testFactory, global.TEST_VAR_USERNAME, "")
 	assert.EqualError(missingErr, ERR_USERNAME_OR_PASSWORD_NOT_SET)
-	_, missingErr = New(factory, "", "")
+	_, missingErr = New(testFactory, "", "")
 	assert.EqualError(missingErr, ERR_USERNAME_OR_PASSWORD_NOT_SET)
+}
 
+func TestCredentialNew(t *testing.T) {
+	assert, log, testFactory := initTest(t)
 	log.Info().Msg("Testing basic creation.")
-	testCredential, newErr := New(factory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(newErr)
 	assert.Equal(global.TEST_VAR_USERNAME, testCredential.Username)
 	assert.Equal(global.TEST_VAR_PASSWORD, testCredential.Password)
@@ -44,389 +43,431 @@ func TestCredentialNew(t *testing.T) {
 	assert.True(testCredential.Initialized)
 }
 
-func TestCredentialAttributes(t *testing.T) {
-	assert, log := global.InitTest(t)
-
-	// Test basic info.
-	factory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	fiError := factory.Initialize()
-	assert.NoError(fiError)
-	assert.True(factory.Initialized)
-	testCredential, newErr := New(factory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
-	assert.NoError(newErr)
-
-	// Username testing
+func TestCredentialAttributeGetUsernameRedirect(t *testing.T) {
+	assert, log, testFactory := initTest(t)
 	log.Info().Msg("Testing username accessibility through GetAttribute.")
-	username, usernameErr := testCredential.GetAttribute("username")
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
+	username := testCredential.GetAttribute("username")
 	assert.Equal(global.TEST_VAR_USERNAME, username)
-	assert.NoError(usernameErr)
+}
 
-	// Username testing
-	log.Info().Msg("Testing password accessibility through GetAttribute.")
-	password, passwordErr := testCredential.GetAttribute("password")
+func TestCredentialAttributeSetRedirectUsername(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing setting username through attribute redirection.")
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
+	attrErr := testCredential.SetAttribute("username", global.TEST_VAR_USERNAME_ALTERNATE)
+	assert.NoError(attrErr)
+	assert.Equal(testCredential.Username, global.TEST_VAR_USERNAME_ALTERNATE)
+}
+
+func TestCredentialAttributeGetPasswordRedirect(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing getting password through attribute redirection.")
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
+	password := testCredential.GetAttribute("password")
 	assert.Equal(global.TEST_VAR_PASSWORD, password)
-	assert.NoError(passwordErr)
+}
 
-	// Attribute that hasn't been set
+func TestCredentialAttributeSetRedirectPassword(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing setting password through attribute redirection.")
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
+	attrErr := testCredential.SetAttribute("password", global.TEST_VAR_PASSWORD_ALTERNATE)
+	assert.NoError(attrErr)
+	assert.Equal(testCredential.Password, global.TEST_VAR_PASSWORD_ALTERNATE)
+}
+
+func TestCredentialAttributeGetAttributeNotSet(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing getting an attribute when it hasn't been set.")
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
 	log.Info().Msg("Testing that correct error returned when an attribute not set and GetAttribute is used.")
-	notSet, notSetErr := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	notSet := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal("", notSet)
-	assert.EqualError(notSetErr, ERR_ATTRIBUTE_NOT_EXIST)
+}
 
-	// Setting an attribute
-	log.Info().Msg("Testing the setting of an attribute.")
-	testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	set, setErr := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+func TestCredentialAttributeSet(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Test attribute setting.")
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
+	attrErr := testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(attrErr)
+	set := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, set)
-	assert.NoError(setErr)
+}
 
-	// Testing bad attribute
-	log.Info().Msg("Testing a bad attribute.")
+func TestCredentialAttributeBadSet(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing attribute setting when the key does not match standards")
+	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(newErr)
 	badSetErr := testCredential.SetAttribute(global.TEST_VAR_BAD_ATTRIBUTE_NAME, global.TEST_VAR_ATTRIBUTE_VALUE)
 	assert.EqualError(badSetErr, ERR_KEY_MUST_MATCH_REGEX)
-	badSetGet, bsgErr := testCredential.GetAttribute(global.TEST_VAR_BAD_ATTRIBUTE_NAME)
+	badSetGet := testCredential.GetAttribute(global.TEST_VAR_BAD_ATTRIBUTE_NAME)
 	assert.Equal("", badSetGet)
-	assert.EqualError(bsgErr, ERR_ATTRIBUTE_NOT_EXIST)
-
-	// Test username and password redirect
-	setAppend := "setattr"
-	testCredential.SetAttribute("username", global.TEST_VAR_USERNAME+setAppend)
-	testCredential.SetAttribute("password", global.TEST_VAR_PASSWORD+setAppend)
-	assert.Equal(testCredential.Username, global.TEST_VAR_USERNAME+setAppend)
-	assert.Equal(testCredential.Password, global.TEST_VAR_PASSWORD+setAppend)
 }
 
 func TestCredentialSave(t *testing.T) {
-	assert, log := global.InitTest(t)
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the saving of a credential.")
 
-	// Reinitialise everything
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	testFactory.Initialize()
 	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(newErr)
-
-	testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	attrErr := testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(attrErr)
 	saveErr := testCredential.Save()
-	log.Info().Msg("Testing that files save correctly.")
 	assert.NoError(saveErr)
-
-	os.RemoveAll(testCredential.Factory.ParentDirectory)
 }
 
-func TestCredentialInterferedWithSave(t *testing.T) {
-	assert, _ := global.InitTest(t)
+func TestCredentialLoadFromFile(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing load when no file present.")
+	testCredential, loadErr := Load(testFactory)
+	assert.NoError(loadErr)
+	assert.Equal(global.TEST_VAR_USERNAME, testCredential.Username)
+	assert.Equal(global.TEST_VAR_PASSWORD, testCredential.Password)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
 
-	// Testing a factory that has been messed with
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	testFactory.Initialize()
-	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
-	messedWithCredential := Credential{}
-	messedWithCredential.Factory = testFactory
-	messedSave := messedWithCredential.Save()
-	assert.EqualError(messedSave, ERR_NOT_INITIALIZED)
+	parentDirectoryCleanup(t)
+}
+
+func TestCredentialNotInitializedSave(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing saving a credential that has not been initialized.")
+	testCredential := Credential{}
+	testCredential.Factory = testFactory
+	saveErr := testCredential.Save()
+	assert.EqualError(saveErr, ERR_NOT_INITIALIZED)
 }
 
 func TestCredentialSaveProfileNotInitialized(t *testing.T) {
-	assert, log := global.InitTest(t)
-
-	// Reinitialise everything
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	testFactory.Initialize()
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing that files save correctly.")
 	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(newErr)
 	testCredential.Factory = &factory.Factory{}
 	saveErr := testCredential.Save()
-	log.Info().Msg("Testing that files save correctly.")
 	assert.Error(saveErr, factory.ERR_FACTORY_NOT_INITIALIZED)
-
-	os.RemoveAll(testCredential.Factory.ParentDirectory)
+	parentDirectoryCleanup(t)
 }
 
 func TestCredentialSaveFactoryInconsistent(t *testing.T) {
 	assert, log := global.InitTest(t)
-
-	// Reinitialise everything
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	testFactory.Initialize()
-	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	log.Info().Msg("Testing a factory that has been messed and had it's output changed.")
+	testCredential, newErr := buildTestCredentials()
 	assert.NoError(newErr)
 	testCredential.Factory.OutputType = global.OUTPUT_TYPE_INVALID
 	saveErr := testCredential.Save()
 	log.Info().Msg("Testing that files save correctly.")
 	assert.Error(saveErr, factory.ERR_FACTORY_NOT_INITIALIZED)
-
-	os.RemoveAll(testCredential.Factory.ParentDirectory)
+	parentDirectoryCleanup(t)
 }
 
 func TestCredentialProfileNotInitialized(t *testing.T) {
-	assert, log := global.InitTest(t)
-
-	// Reinitialise everything
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	testFactory.Initialize()
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing a profile that has not been initialized.")
 	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(newErr)
 	testCredential.Profile = &profile.Profile{}
 	saveErr := testCredential.Save()
-	log.Info().Msg("Testing that files save correctly.")
 	assert.Error(saveErr, profile.ERR_PROFILE_NOT_INITIALIZED)
-
-	os.RemoveAll(testCredential.Factory.ParentDirectory)
+	parentDirectoryCleanup(t)
 }
 
-func TestCredentialLoadFromIni(t *testing.T) {
+func TestCredentialLoadFromFileNoFile(t *testing.T) {
 	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing load when no file present.")
 
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	fiErr := testFactory.Initialize()
-	assert.NoError(fiErr)
-	assert.True(testFactory.Initialized)
-
-	log.Info().Msg("Testing load with no file present.")
-	_, failLoadErr := LoadFromProfile(global.DEFAULT_PROFILE_NAME, testFactory)
-	assert.Error(failLoadErr)
-
-	log.Info().Msg("Testing ini basic load.")
-	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
-	assert.NoError(newErr)
-	assert.Equal(global.TEST_VAR_USERNAME, testCredential.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD, testCredential.Password)
-	assert.True(testCredential.Factory.Initialized)
-	assert.True(testCredential.Initialized)
-
-	log.Info().Msg("Saving temporary credentials")
-	saveErr := testCredential.Save()
-	assert.NoError(saveErr)
-	testCredential = nil
-
-	log.Info().Msg("Reloading temporary credentials")
-	loadedCredential, loadErr := LoadFromProfile(global.DEFAULT_PROFILE_NAME, testFactory)
-	assert.NoError(loadErr)
-	assert.Equal(global.TEST_VAR_USERNAME, loadedCredential.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD, loadedCredential.Password)
-
-	log.Info().Msg("Testing re-saving and adding attributes.")
-	csError := loadedCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	assert.NoError(csError)
-	csError = loadedCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL+"v2", global.TEST_VAR_ATTRIBUTE_VALUE+"v2")
-	assert.NoError(csError)
-	rsErr := loadedCredential.Save()
-	assert.NoError(rsErr)
-
-	loadedCredential, loadErr = LoadFromProfile(global.DEFAULT_PROFILE_NAME, testFactory)
-	assert.NoError(loadErr)
-	fav, favErr := loadedCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	sav, savErr := loadedCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL + "v2")
-	assert.NoError(favErr)
-	assert.NoError(savErr)
-	assert.EqualValues(global.TEST_VAR_ATTRIBUTE_VALUE, fav)
-	assert.EqualValues(global.TEST_VAR_ATTRIBUTE_VALUE+"v2", sav)
-
-	os.RemoveAll(loadedCredential.Factory.ParentDirectory)
+	for _, fileType := range serializer.GetSupportedFileTypes() {
+		log.Info().Msgf("Testing the '%v' file type.", fileType)
+		secondTestFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
+		assert.NoError(factoryErr)
+		outputErr := secondTestFactory.SetOutputType(fileType)
+		assert.NoError(outputErr)
+		_, loadErr := LoadFromProfile(global.DEFAULT_PROFILE_NAME, secondTestFactory)
+		assert.Error(loadErr)
+	}
 }
 
-func TestCredentialLoadFactoryNotInitialized(t *testing.T) {
-	assert, _ := global.InitTest(t)
-
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+func TestCredentialLoadFactoryInvalidOutputType(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing an invalid output type against a factory object.")
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
 	testFactory.OutputType = global.OUTPUT_TYPE_INVALID
 	_, loadErr := Load(testFactory)
 	assert.EqualError(loadErr, serializer.ERR_UNRECOGNIZED_OUTPUT_TYPE)
 }
 
-func TestCredentialLoadNoIniFile(t *testing.T) {
-	assert, _ := global.InitTest(t)
-
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
-	assert.NoError(factoryErr)
-	os.RemoveAll(testFactory.ParentDirectory)
-	_, loadErr := Load(testFactory)
-	assert.Error(loadErr)
-}
-
 func TestCredentialLoadProfileNotInitialized(t *testing.T) {
-	assert, _ := global.InitTest(t)
-
-	testFactory := &factory.Factory{}
-	_, loadErr := Load(testFactory)
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing the creation of a credential with a uninitialized factory.")
+	secondTestFactory := &factory.Factory{}
+	_, loadErr := Load(secondTestFactory)
 	assert.EqualError(loadErr, ERR_FACTORY_MUST_BE_INITIALIZED)
 }
 
-func TestCredentialLoad(t *testing.T) {
+func TestCredentialLoadEnvNoValues(t *testing.T) {
 	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing failing to serialize variables from the environment due to not existing.")
+	for _, label := range []string{global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL, global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL, global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL} {
+		usErr := os.Unsetenv(label)
+		assert.NoError(usErr)
+	}
 
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	secondTestFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
-	fiErr := testFactory.Initialize()
-	assert.NoError(fiErr)
-	assert.True(testFactory.Initialized)
+	soErr := secondTestFactory.SetOutputType(global.OUTPUT_TYPE_ENV)
+	assert.NoError(soErr)
+	_, credErr := Load(secondTestFactory)
+	assert.EqualError(credErr, serializer.ERR_REQUIRED_VARIABLE_USERNAME_NOT_FOUND)
 
-	log.Info().Msg("Testing load with no file or environment variables present.")
-	_, failLoadErr := Load(testFactory)
-	assert.Error(failLoadErr)
-
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
-	log.Info().Msg("Testing basic environment load.")
-	os.Setenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL, global.TEST_VAR_USERNAME)
-	os.Setenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL, global.TEST_VAR_PASSWORD)
-	testFactory.SetOutputType(global.OUTPUT_TYPE_ENV)
-	loadedCredential, envLoadErr := Load(testFactory)
-	assert.NoError(envLoadErr)
-	assert.Equal(global.TEST_VAR_USERNAME, loadedCredential.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD, loadedCredential.Password)
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
-
-	log.Info().Msg("Saving credential to test load.")
-	testCredential, newErr := New(testFactory, global.TEST_VAR_USERNAME_ALTERNATE, global.TEST_VAR_PASSWORD_ALTERNATE)
-	assert.NoError(newErr)
-	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE, testCredential.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE, testCredential.Password)
-	assert.True(testCredential.Factory.Initialized)
-	assert.True(testCredential.Initialized)
-
-	log.Info().Msg("Saving file credentials")
-	saveErr := testCredential.Save()
-	assert.NoError(saveErr)
-
-	log.Info().Msg("Testing that file credentials are loaded when no environment variables present.")
-	loadedCredential, envLoadErr = Load(testFactory)
-	assert.NoError(envLoadErr)
-	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE, loadedCredential.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE, loadedCredential.Password)
-
-	os.RemoveAll(testCredential.Factory.ParentDirectory)
+	for _, label := range []string{global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL, global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL, global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL} {
+		_, exists := os.LookupEnv(label)
+		assert.False(exists)
+	}
 }
 
 func TestCredentialSaveEnv(t *testing.T) {
-	assert, _ := global.InitTest(t)
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
-
-	testCredentials, credErr := buildTestCredentials()
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing saving variables to environment variables.")
+	testCredentials, tcErr := buildTestCredentials()
 	testCredentials.Factory.SetOutputType(global.OUTPUT_TYPE_ENV)
-	assert.NoError(credErr)
+	assert.NoError(tcErr)
 
-	_, exists := os.LookupEnv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
-	assert.False(exists)
-	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
-	assert.False(exists)
-	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
-	assert.False(exists)
-
-	//testCredentials.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	testCredentials.SetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	soErr := testCredentials.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(soErr)
 	deployErr := testCredentials.Save()
 	assert.NoError(deployErr)
 
-	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
-	assert.True(exists)
-	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
-	assert.True(exists)
-	_, exists = os.LookupEnv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
-	assert.True(exists)
-
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL)
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL)
-	os.Unsetenv(global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL)
+	for _, label := range []string{global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL, global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL, global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL} {
+		_, exists := os.LookupEnv(label)
+		assert.True(exists)
+	}
 }
 
-func TestCredentialProfiles(t *testing.T) {
-	assert, _ := global.InitTest(t)
-	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+func TestCredentialLoadEnv(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing loading credentials from the environment.")
 
+	soErr := testFactory.SetOutputType(global.OUTPUT_TYPE_ENV)
+	assert.NoError(soErr)
+	testCredential, credErr := Load(testFactory)
+	assert.NoError(credErr)
+
+	assert.Equal(global.TEST_VAR_USERNAME, testCredential.Username)
+	assert.Equal(global.TEST_VAR_PASSWORD, testCredential.Password)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+
+	for _, label := range []string{global.TEST_VAR_ENVIRONMENT_USERNAME_LABEL, global.TEST_VAR_ENVIRONMENT_PASSWORD_LABEL, global.TEST_VAR_ENVIRONMENT_ATTRIBUTE_NAME_LABEL} {
+		usErr := os.Unsetenv(label)
+		assert.NoError(usErr)
+	}
+}
+
+func TestCredentialCreateNoProfile(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the creation of a credential using the default profile.")
 	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(tcErr)
-	testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	testCredential.Save()
+	setErr := testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(setErr)
+	saveErr := testCredential.Save()
+	assert.NoError(saveErr)
+}
 
-	credentialOne, coErr := NewProfile(global.TEST_VAR_FIRST_PROFILE_LABEL, testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
-	assert.NoError(coErr)
-	credentialOne.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	credentialOne.Save()
+func TestCredentialCreateFirstProfile(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the creation of a credential adding a profile.")
+	testCredential, tcErr := NewProfile(global.TEST_VAR_FIRST_PROFILE_LABEL, testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(setErr)
+	saveErr := testCredential.Save()
+	assert.NoError(saveErr)
+}
 
-	credentialTwo, ctErr := NewProfile(global.TEST_VAR_SECOND_PROFILE_LABEL, testFactory, global.TEST_VAR_USERNAME_ALTERNATE, global.TEST_VAR_PASSWORD_ALTERNATE)
-	assert.NoError(ctErr)
-	credentialTwo.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
-	credentialTwo.Save()
+func TestCredentialCreateSecondProfile(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the creation of a credential adding a second profile.")
+	testCredential, tcErr := NewProfile(global.TEST_VAR_SECOND_PROFILE_LABEL, testFactory, global.TEST_VAR_USERNAME_ALTERNATE, global.TEST_VAR_PASSWORD_ALTERNATE)
+	assert.NoError(tcErr)
+	setErr := testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(setErr)
+	saveErr := testCredential.Save()
+	assert.NoError(saveErr)
+}
 
-	testCredential, tcErr = Load(testFactory)
+func TestCredentialLoadNoProfile(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the loading of an existing credential using the default profile.")
+	testCredential, tcErr := Load(testFactory)
 	assert.NoError(tcErr)
 	assert.Equal(global.DEFAULT_PROFILE_NAME, testCredential.Profile.Name)
-	attrValue, attrErr := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.NoError(attrErr)
+	attrValue := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
 	assert.True(testCredential.Initialized)
 	assert.True(testCredential.Profile.Initialized)
+}
 
-	credentialOne, coErr = LoadFromProfile(global.TEST_VAR_FIRST_PROFILE_LABEL, testFactory)
-	assert.NoError(coErr)
-	assert.Equal(global.TEST_VAR_FIRST_PROFILE_LABEL, credentialOne.Profile.Name)
-	attrValue, attrErr = credentialOne.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.NoError(attrErr)
+func TestCredentialLoadFirstProfile(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the loading of an existing credential using the first profile.")
+	testCredential, tcErr := LoadFromProfile(global.TEST_VAR_FIRST_PROFILE_LABEL, testFactory)
+	assert.NoError(tcErr)
+	assert.Equal(global.TEST_VAR_FIRST_PROFILE_LABEL, testCredential.Profile.Name)
+	attrValue := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
-	assert.Equal(global.TEST_VAR_USERNAME, credentialOne.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD, credentialOne.Password)
-	assert.True(credentialOne.Initialized)
-	assert.True(credentialOne.Profile.Initialized)
+	assert.Equal(global.TEST_VAR_USERNAME, testCredential.Username)
+	assert.Equal(global.TEST_VAR_PASSWORD, testCredential.Password)
+	assert.True(testCredential.Initialized)
+	assert.True(testCredential.Profile.Initialized)
+}
 
-	credentialTwo, ctErr = LoadFromProfile(global.TEST_VAR_SECOND_PROFILE_LABEL, testFactory)
-	assert.NoError(ctErr)
-	assert.Equal(global.TEST_VAR_SECOND_PROFILE_LABEL, credentialTwo.Profile.Name)
-	attrValue, attrErr = credentialTwo.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.NoError(attrErr)
+func TestCredentialLoadSecondProfile(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the loading of an existing credential using the second profile.")
+	testCredential, tcErr := LoadFromProfile(global.TEST_VAR_SECOND_PROFILE_LABEL, testFactory)
+	assert.NoError(tcErr)
+	assert.Equal(global.TEST_VAR_SECOND_PROFILE_LABEL, testCredential.Profile.Name)
+	attrValue := testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
 	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
-	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE, credentialTwo.Username)
-	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE, credentialTwo.Password)
-	assert.True(credentialTwo.Initialized)
-	assert.True(credentialTwo.Profile.Initialized)
+	assert.Equal(global.TEST_VAR_USERNAME_ALTERNATE, testCredential.Username)
+	assert.Equal(global.TEST_VAR_PASSWORD_ALTERNATE, testCredential.Password)
+	assert.True(testCredential.Initialized)
+	assert.True(testCredential.Profile.Initialized)
+	parentDirectoryCleanup(t)
+}
 
-	os.RemoveAll(testFactory.ParentDirectory)
+func TestCredentialDeleteAttributes(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the loading of an existing credential using the second profile.")
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(setErr)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	deleteErr := testCredential.DeleteAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	assert.NoError(deleteErr)
+	assert.Equal("", testCredential.GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	deleteErr = testCredential.DeleteAttribute(global.TEST_VAR_USERNAME_LABEL)
+	assert.EqualError(deleteErr, ERR_CANNOT_REMOVE_USERNAME)
+	deleteErr = testCredential.DeleteAttribute(global.TEST_VAR_PASSWORD_LABEL)
+	assert.EqualError(deleteErr, ERR_CANNOT_REMOVE_PASSWORD)
+	parentDirectoryCleanup(t)
+}
+
+func TestCredentialCannotRedirectUsernameSetAttribute(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing attempting to set username when a section has been set.")
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_USERNAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.EqualError(setErr, ERR_CANNOT_SET_USERNAME_WHEN_USING_SECTION)
+}
+
+func TestCredentialCannotRedirectPasswordSetAttribute(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing attempting to set password when a section has been set.")
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_PASSWORD_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.EqualError(setErr, ERR_CANNOT_SET_PASSWORD_WHEN_USING_SECTION)
+}
+
+func TestCredentialDeleteSectionAttributes(t *testing.T) {
+	assert, log, testFactory := initTest(t)
+	log.Info().Msg("Testing the loading of an existing credential using the second profile.")
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+	setErr := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	assert.NoError(setErr)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	deleteErr := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).DeleteAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	assert.NoError(deleteErr)
+	assert.Equal("", testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL))
+	parentDirectoryCleanup(t)
+}
+
+/*
+This tests:
+ - Whether a value is set correctly in selectedSection of the returned Credential.
+ - Whether a cloned section is correctly a shallow copy of the initial Credential.
+ */
+func TestSectionCredentialWithValue(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing to ensure Section() returns a value as expected")
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME)
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+
+	sectionCredential := testCredential.Section(global.TEST_VAR_FIRST_SECTION_KEY)
+	assert.NotEqual(testCredential.selectedSection, sectionCredential.selectedSection)
+	assert.NotEqual("", sectionCredential.selectedSection)
+}
+
+/*
+This tests:
+ - Whether a blank section name is handled correctly.
+*/
+func TestSectionBlank(t *testing.T) {
+	assert, log := global.InitTest(t)
+	log.Info().Msg("Testing to ensure Section() returns a the blank section value as expected")
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME)
+	testCredential, tcErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+	assert.NoError(tcErr)
+
+	sectionCredential := testCredential.Section("")
+	assert.Equal(global.SECTION_NAME_BLANK, sectionCredential.selectedSection)
 }
 
 func TestProfile(t *testing.T) {
 	assert, _ := global.InitTest(t)
 
-	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	_, credentialErr := NewProfile("", testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.EqualError(credentialErr, profile.ERR_PROFILE_NAME_MUST_MATCH_REGEX)
 
 	testCredentials, credentialErr := New(testFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
 	assert.NoError(credentialErr)
-	attrErr := testCredentials.SetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
+	attrErr := testCredentials.Section(global.TEST_VAR_FIRST_SECTION_KEY).SetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL, global.TEST_VAR_ATTRIBUTE_VALUE)
 	assert.NoError(attrErr)
 
-	_, attrErr = testCredentials.GetSectionAttribute("", "")
-	assert.EqualError(attrErr, ERR_ATTRIBUTE_NOT_EXIST)
-	_, attrErr = testCredentials.GetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, "")
-	assert.EqualError(attrErr, ERR_ATTRIBUTE_NOT_EXIST)
-	myAttribute, attrErr := testCredentials.GetSectionAttribute(global.TEST_VAR_FIRST_SECTION_KEY, global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
-	assert.NoError(attrErr)
-	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, myAttribute)
+	attrValue := testCredentials.Section("").GetAttribute("")
+	assert.Equal("", attrValue)
+	attrValue = testCredentials.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute("")
+	assert.Equal("", attrValue)
+	attrValue = testCredentials.Section(global.TEST_VAR_FIRST_SECTION_KEY).GetAttribute(global.TEST_VAR_ATTRIBUTE_NAME_LABEL)
+	assert.Equal(global.TEST_VAR_ATTRIBUTE_VALUE, attrValue)
 }
 
 func buildTestCredentials() (*Credential, error) {
-	factory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, true)
+	buildFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 
 	if factoryErr != nil {
 		return nil, factoryErr
 	}
 
-	fiError := factory.Initialize()
+	return New(buildFactory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+}
 
-	if fiError != nil {
-		return nil, fiError
-	}
+func initTest(t* testing.T) (*as.Assertions, zerolog.Logger, *factory.Factory) {
+	assert, log := global.InitTest(t)
+	testFactory, tfErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
+	assert.NoError(tfErr)
+	assert.True(testFactory.Initialized)
+	return assert, log, testFactory
+}
 
-	return New(factory, global.TEST_VAR_USERNAME, global.TEST_VAR_PASSWORD)
+func parentDirectoryCleanup(t *testing.T) {
+	assert, _, testFactory := initTest(t)
+	rmErr := os.RemoveAll(testFactory.ParentDirectory)
+	assert.NoError(rmErr)
+	assert.NoDirExists(testFactory.ParentDirectory)
 }

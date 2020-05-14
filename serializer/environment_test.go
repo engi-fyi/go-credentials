@@ -51,7 +51,7 @@ func TestParseEnvironmentVariable(t *testing.T) {
 	log.Info().Msg("Testing environment parsing.")
 	assert.True(true)
 
-	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, factoryErr := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	assert.NoError(factoryErr)
 	testSerializer := New(testFactory, global.DEFAULT_PROFILE_NAME)
 
@@ -88,7 +88,7 @@ func TestParseEnvironmentVariable(t *testing.T) {
 }
 
 func createTestEnv(profileName string, useAlternates bool) (*factory.Factory, *Serializer, error) {
-	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME, false)
+	testFactory, _ := factory.New(global.TEST_VAR_APPLICATION_NAME)
 	testFactory.SetOutputType(global.OUTPUT_TYPE_ENV)
 	testSerializer := New(testFactory, profileName)
 	attributes := map[string]map[string]string{

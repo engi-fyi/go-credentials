@@ -63,3 +63,10 @@ func (thisSerializer *Serializer) Deserialize() (string, string, map[string]map[
 		return "", "", make(map[string]map[string]string), errors.New(ERR_UNRECOGNIZED_OUTPUT_TYPE)
 	}
 }
+
+func GetSupportedFileTypes() []string {
+	return []string{
+		global.OUTPUT_TYPE_INI,
+		global.OUTPUT_TYPE_JSON,
+	}
+}
