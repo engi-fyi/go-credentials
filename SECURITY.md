@@ -2,13 +2,13 @@
 
 ## Supported Versions
 
-As this project is actively under beta development, only the latest release is supported for security fixes.
+This project has finished its initial development cycle. As a rule, the latest version of each major release will be supported.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| latest  | :white_check_mark: |
-| 1.1.0   | :white_check_mark: |
-| 1.0.0   | :white_check_mark: |
+| Version          | Supported          |
+| ---------------- | ------------------ |
+| latest (v1.2.1)  | :check_mark:       |
+| v1.1.1           | :cross_mark:       |
+| v1.0.0           | :cross_mark:       |
 
 ## Reporting a Vulnerability
 
